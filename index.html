@@ -97,12 +97,9 @@
                         <span class="error-msg" id="elementTypeError">Please select an element type</span>
                     </div>
                     <div class="form-group">
-                        <label for="priceLevel">Price level</label>
-                        <select id="priceLevel">
-                            <option value="0">Level 1</option>
-                            <option value="1">Level 2</option>
-                            <option value="2">Level 3</option>
-                        </select>
+                        <label for="pricePerM2">Price per m² (£)</label>
+                        <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="e.g. 35.00">
+                        <span class="error-msg" id="pricePerM2Error">Please enter a price</span>
                     </div>
                 </div>
 
@@ -229,7 +226,6 @@
                                     <th>Dimensions</th>
                                     <th>Faces</th>
                                     <th>Area (m²)</th>
-                                    <th>Level</th>
                                     <th>Location</th>
                                     <th>Price</th>
                                     <th></th>

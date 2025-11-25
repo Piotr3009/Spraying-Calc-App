@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const paintManufacturerInput = document.getElementById('paintManufacturer');
     const paintLocationSelect = document.getElementById('paintLocation');
     const elementTypeSelect = document.getElementById('elementType');
-    const priceLevelSelect = document.getElementById('priceLevel');
+    const pricePerM2Input = document.getElementById('pricePerM2');
     const widthInput = document.getElementById('width');
     const heightInput = document.getElementById('height');
     const thicknessInput = document.getElementById('thickness');
@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const heightError = document.getElementById('heightError');
     const thicknessError = document.getElementById('thicknessError');
     const facesError = document.getElementById('facesError');
+    const pricePerM2Error = document.getElementById('pricePerM2Error');
 
     // =========================================================
     // LOCAL STORAGE KEY
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.paintManufacturer) paintManufacturerInput.value = data.paintManufacturer;
                 if (data.paintLocation) paintLocationSelect.value = data.paintLocation;
                 if (data.elementType) elementTypeSelect.value = data.elementType;
-                if (data.priceLevel !== undefined) priceLevelSelect.value = data.priceLevel;
+                if (data.pricePerM2) pricePerM2Input.value = data.pricePerM2;
             } catch (e) {
                 console.warn('Failed to load saved form data:', e);
             }
@@ -156,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
             paintManufacturer: paintManufacturerInput.value,
             paintLocation: paintLocationSelect.value,
             elementType: elementTypeSelect.value,
-            priceLevel: priceLevelSelect.value
+            pricePerM2: pricePerM2Input.value
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
@@ -311,29 +312,14 @@ document.addEventListener('DOMContentLoaded', function() {
         <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
              xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <!-- Gradient for selected front face -->
-                <linearGradient id="frontSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#a2f6c5"/>
-                    <stop offset="100%" style="stop-color:#53c2ff"/>
-                </linearGradient>
-                <!-- Gradient for selected top face (lighter) -->
-                <linearGradient id="topSelectedGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#b8f8d4"/>
-                    <stop offset="100%" style="stop-color:#7ed8ff"/>
-                </linearGradient>
-                <!-- Gradient for selected right face (medium) -->
-                <linearGradient id="rightSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#6bcfaa"/>
-                    <stop offset="100%" style="stop-color:#3ba8e0"/>
-                </linearGradient>
                 <!-- Panel background gradient -->
                 <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#1d2738" stop-opacity="0.95"/>
-                    <stop offset="100%" stop-color="#0f1625" stop-opacity="0.98"/>
+                    <stop offset="0%" stop-color="#3a4038" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#2f352e" stop-opacity="0.98"/>
                 </linearGradient>
                 <!-- Glow filter for selected faces -->
                 <filter id="glow">
-                    <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                     <feMerge>
                         <feMergeNode in="coloredBlur"/>
                         <feMergeNode in="SourceGraphic"/>
@@ -490,19 +476,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Formula: price = area (m²) × price per m²
     // =========================================================
     function calculatePrice(area) {
-        const elementType = elementTypeSelect.value;
-        const paintLocation = paintLocationSelect.value;
-        const priceLevelIndex = parseInt(priceLevelSelect.value);
+        const pricePerM2 = parseFloat(pricePerM2Input.value);
 
-        if (!elementType || !priceTable[elementType]) {
+        if (!pricePerM2 || pricePerM2 <= 0) {
             return 0;
         }
 
-        // Lookup the price per square meter from the price table
-        const basePricePerSqm = priceTable[elementType][paintLocation][priceLevelIndex];
-
         // Calculate total price
-        const totalPrice = area * basePricePerSqm;
+        const totalPrice = area * pricePerM2;
 
         return totalPrice;
     }
@@ -532,16 +513,26 @@ document.addEventListener('DOMContentLoaded', function() {
         widthInput.classList.remove('input-error');
         heightInput.classList.remove('input-error');
         thicknessInput.classList.remove('input-error');
+        pricePerM2Input.classList.remove('input-error');
         elementTypeError.classList.remove('visible');
         widthError.classList.remove('visible');
         heightError.classList.remove('visible');
         thicknessError.classList.remove('visible');
         facesError.classList.remove('visible');
+        pricePerM2Error.classList.remove('visible');
 
         // Validate element type
         if (!elementTypeSelect.value) {
             elementTypeSelect.classList.add('input-error');
             elementTypeError.classList.add('visible');
+            isValid = false;
+        }
+
+        // Validate price per m²
+        const pricePerM2 = parseFloat(pricePerM2Input.value);
+        if (!pricePerM2 || pricePerM2 <= 0) {
+            pricePerM2Input.classList.add('input-error');
+            pricePerM2Error.classList.add('visible');
             isValid = false;
         }
 
@@ -600,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
             thickness: parseFloat(thicknessInput.value),
             faces: Object.keys(faces).filter(f => faces[f].selected),
             area: area,
-            priceLevel: parseInt(priceLevelSelect.value) + 1,
+            pricePerM2: parseFloat(pricePerM2Input.value),
             paintLocation: paintLocationSelect.value,
             price: price
         };
@@ -658,7 +649,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
                 <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
                 <td>${elem.area.toFixed(3)}</td>
-                <td>L${elem.priceLevel}</td>
                 <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
                 <td class="price-cell">£${elem.price.toFixed(2)}</td>
                 <td><button class="delete-btn" data-id="${elem.id}" title="Remove element">✕</button></td>
@@ -750,9 +740,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Element type and price level changes - update calculations
+    // Element type and price changes - update calculations
     elementTypeSelect.addEventListener('change', updateCalculations);
-    priceLevelSelect.addEventListener('change', updateCalculations);
+    pricePerM2Input.addEventListener('input', updateCalculations);
     paintLocationSelect.addEventListener('change', updateCalculations);
 
     // Add element button
@@ -765,6 +755,11 @@ document.addEventListener('DOMContentLoaded', function() {
     elementTypeSelect.addEventListener('change', function() {
         this.classList.remove('input-error');
         elementTypeError.classList.remove('visible');
+    });
+
+    pricePerM2Input.addEventListener('input', function() {
+        this.classList.remove('input-error');
+        pricePerM2Error.classList.remove('visible');
     });
 
     [widthInput, heightInput, thicknessInput].forEach((input, index) => {
