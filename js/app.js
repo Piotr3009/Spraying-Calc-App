@@ -181,15 +181,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Creates a proportional SVG representation of the element
     // based on the width, height, and thickness values.
     //
-    // - Front/Back: main rectangle (uses width x height ratio)
-    // - Top/Bottom: thin bars on top/bottom edges
-    // - Left/Right: thin bars on left/right edges
+    // Layout (Option A - Flat orthographic view):
+    // - Front/Back: main rectangle with aspect ratio W:H
+    // - Top: thin horizontal strip above front (height proportional to thickness)
+    // - Bottom: thin horizontal strip below front (height proportional to thickness)
+    // - Left: thin vertical strip to the left (width proportional to thickness)
+    // - Right: thin vertical strip to the right (width proportional to thickness)
     // =========================================================
     function renderSVGDiagram() {
-        // Get current dimension values (default to 100 if not set)
-        const widthVal = parseFloat(widthInput.value) || 100;
-        const heightVal = parseFloat(heightInput.value) || 100;
-        const thicknessVal = parseFloat(thicknessInput.value) || 18;
+        // Get current dimension values (default to reasonable values if not set)
+        const W = parseFloat(widthInput.value) || 600;
+        const H = parseFloat(heightInput.value) || 400;
+        const T = parseFloat(thicknessInput.value) || 18;
 
         // Update dimension display
         const wDisplay = widthInput.value || '-';
@@ -197,48 +200,105 @@ document.addEventListener('DOMContentLoaded', function() {
         const tDisplay = thicknessInput.value || '-';
         dimensionDisplayDims.textContent = `Width: ${wDisplay} mm, Height: ${hDisplay} mm, Thickness: ${tDisplay} mm`;
 
-        // Calculate aspect ratio for the main face (front/back)
-        const aspectRatio = widthVal / heightVal;
+        // =========================================================
+        // PROPORTIONAL SIZING CALCULATIONS
+        // =========================================================
 
-        // Maximum dimensions for the main rectangle in the SVG
-        const maxWidth = 180;
-        const maxHeight = 160;
-        // Thickness bar size (proportional but capped)
-        const edgeThickness = Math.min(Math.max(thicknessVal / 5, 12), 30);
+        // Maximum dimensions for the front rectangle in pixels
+        const maxFrontWidth = 260;
+        const maxFrontHeight = 180;
 
-        // Calculate actual rectangle dimensions while maintaining aspect ratio
-        let rectWidth, rectHeight;
-        if (aspectRatio >= 1) {
+        // Calculate front rectangle size maintaining aspect ratio
+        const widthToHeightRatio = W / H;
+        let frontWidthPx, frontHeightPx;
+
+        if (widthToHeightRatio >= 1) {
             // Wider than tall or square
-            rectWidth = maxWidth;
-            rectHeight = maxWidth / aspectRatio;
-            if (rectHeight > maxHeight) {
-                rectHeight = maxHeight;
-                rectWidth = maxHeight * aspectRatio;
+            frontWidthPx = maxFrontWidth;
+            frontHeightPx = maxFrontWidth / widthToHeightRatio;
+            if (frontHeightPx > maxFrontHeight) {
+                frontHeightPx = maxFrontHeight;
+                frontWidthPx = maxFrontHeight * widthToHeightRatio;
             }
         } else {
             // Taller than wide
-            rectHeight = maxHeight;
-            rectWidth = maxHeight * aspectRatio;
-            if (rectWidth > maxWidth) {
-                rectWidth = maxWidth;
-                rectHeight = maxWidth / aspectRatio;
+            frontHeightPx = maxFrontHeight;
+            frontWidthPx = maxFrontHeight * widthToHeightRatio;
+            if (frontWidthPx > maxFrontWidth) {
+                frontWidthPx = maxFrontWidth;
+                frontHeightPx = maxFrontWidth / widthToHeightRatio;
             }
         }
 
-        // SVG viewBox dimensions (with padding for edge faces)
+        // Calculate thickness proportions relative to dimensions
+        const thicknessToWidthRatio = T / W;
+        const thicknessToHeightRatio = T / H;
+
+        // Calculate thickness strip sizes with clamping
+        // Top/Bottom strips: height based on thickness-to-height ratio
+        let topBottomThicknessPx = frontHeightPx * thicknessToHeightRatio;
+        topBottomThicknessPx = Math.max(4, Math.min(topBottomThicknessPx, frontHeightPx * 0.25));
+
+        // Left/Right strips: width based on thickness-to-width ratio
+        let leftRightThicknessPx = frontWidthPx * thicknessToWidthRatio;
+        leftRightThicknessPx = Math.max(4, Math.min(leftRightThicknessPx, frontWidthPx * 0.25));
+
+        // =========================================================
+        // SVG LAYOUT CALCULATIONS
+        // =========================================================
+
+        // Padding around the diagram
         const padding = 20;
-        const svgWidth = rectWidth + 2 * edgeThickness + 2 * padding + 30;
-        const svgHeight = rectHeight + 2 * edgeThickness + 2 * padding + 30;
 
-        // Offset for 3D effect
-        const offset3D = 15;
+        // Total SVG dimensions
+        const svgWidth = leftRightThicknessPx + frontWidthPx + leftRightThicknessPx + 2 * padding;
+        const svgHeight = topBottomThicknessPx + frontHeightPx + topBottomThicknessPx + 2 * padding;
 
-        // Starting position for the front face
-        const frontX = padding + edgeThickness;
-        const frontY = padding + edgeThickness + offset3D;
+        // Position calculations for each face
+        // Left strip
+        const leftX = padding;
+        const leftY = padding + topBottomThicknessPx;
+        const leftWidth = leftRightThicknessPx;
+        const leftHeight = frontHeightPx;
 
-        // Build the SVG content
+        // Front rectangle
+        const frontX = padding + leftRightThicknessPx;
+        const frontY = padding + topBottomThicknessPx;
+        const frontWidth = frontWidthPx;
+        const frontHeight = frontHeightPx;
+
+        // Right strip
+        const rightX = padding + leftRightThicknessPx + frontWidthPx;
+        const rightY = padding + topBottomThicknessPx;
+        const rightWidth = leftRightThicknessPx;
+        const rightHeight = frontHeightPx;
+
+        // Top strip
+        const topX = padding + leftRightThicknessPx;
+        const topY = padding;
+        const topWidth = frontWidthPx;
+        const topHeight = topBottomThicknessPx;
+
+        // Bottom strip
+        const bottomX = padding + leftRightThicknessPx;
+        const bottomY = padding + topBottomThicknessPx + frontHeightPx;
+        const bottomWidth = frontWidthPx;
+        const bottomHeight = topBottomThicknessPx;
+
+        // Back face (shown as dashed outline offset behind front)
+        const backOffset = 6;
+        const backX = frontX + backOffset;
+        const backY = frontY - backOffset;
+        const backWidth = frontWidthPx;
+        const backHeight = frontHeightPx;
+
+        // Determine if labels should be shown based on strip size
+        const showTopBottomLabel = topBottomThicknessPx >= 12;
+        const showLeftRightLabel = leftRightThicknessPx >= 12;
+
+        // =========================================================
+        // BUILD SVG CONTENT
+        // =========================================================
         let svgContent = `
         <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
              xmlns="http://www.w3.org/2000/svg">
@@ -250,64 +310,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 </linearGradient>
             </defs>
 
-            <!-- Back face (offset behind front for 3D effect) -->
+            <!-- Back face (dashed outline behind front for depth) -->
             <g class="svg-face svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
                 <rect class="svg-face-fill"
-                      x="${frontX + offset3D}" y="${frontY - offset3D}"
-                      width="${rectWidth}" height="${rectHeight}" rx="4"/>
+                      x="${backX}" y="${backY}"
+                      width="${backWidth}" height="${backHeight}" rx="3"/>
                 <text class="svg-face-label"
-                      x="${frontX + offset3D + rectWidth/2}" y="${frontY - offset3D + rectHeight/2}">Back</text>
+                      x="${backX + backWidth/2}" y="${backY + backHeight/2}">Back</text>
             </g>
 
-            <!-- Top face (thin bar at top edge, skewed for 3D) -->
+            <!-- Top strip (horizontal, above front) -->
             <g class="svg-face svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
-                <polygon class="svg-face-fill"
-                         points="${frontX},${frontY}
-                                 ${frontX + rectWidth},${frontY}
-                                 ${frontX + rectWidth + offset3D},${frontY - offset3D}
-                                 ${frontX + offset3D},${frontY - offset3D}"/>
-                <text class="svg-face-label"
-                      x="${frontX + rectWidth/2 + offset3D/2}" y="${frontY - offset3D/2}">Top</text>
-            </g>
-
-            <!-- Right face (thin bar on right edge, skewed for 3D) -->
-            <g class="svg-face svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
-                <polygon class="svg-face-fill"
-                         points="${frontX + rectWidth},${frontY}
-                                 ${frontX + rectWidth + offset3D},${frontY - offset3D}
-                                 ${frontX + rectWidth + offset3D},${frontY + rectHeight - offset3D}
-                                 ${frontX + rectWidth},${frontY + rectHeight}"/>
-                <text class="svg-face-label"
-                      x="${frontX + rectWidth + offset3D/2}" y="${frontY + rectHeight/2}"
-                      transform="rotate(90, ${frontX + rectWidth + offset3D/2}, ${frontY + rectHeight/2})">Right</text>
-            </g>
-
-            <!-- Left face (thin bar on left edge) -->
-            <g class="svg-face svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left">
                 <rect class="svg-face-fill"
-                      x="${frontX - edgeThickness}" y="${frontY}"
-                      width="${edgeThickness}" height="${rectHeight}" rx="2"/>
-                <text class="svg-face-label"
-                      x="${frontX - edgeThickness/2}" y="${frontY + rectHeight/2}"
-                      transform="rotate(-90, ${frontX - edgeThickness/2}, ${frontY + rectHeight/2})">Left</text>
+                      x="${topX}" y="${topY}"
+                      width="${topWidth}" height="${topHeight}" rx="2"/>
+                ${showTopBottomLabel ? `<text class="svg-face-label"
+                      x="${topX + topWidth/2}" y="${topY + topHeight/2}">Top</text>` : ''}
             </g>
 
-            <!-- Bottom face (thin bar at bottom edge) -->
+            <!-- Bottom strip (horizontal, below front) -->
             <g class="svg-face svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom">
                 <rect class="svg-face-fill"
-                      x="${frontX}" y="${frontY + rectHeight}"
-                      width="${rectWidth}" height="${edgeThickness}" rx="2"/>
-                <text class="svg-face-label"
-                      x="${frontX + rectWidth/2}" y="${frontY + rectHeight + edgeThickness/2 + 1}">Bottom</text>
+                      x="${bottomX}" y="${bottomY}"
+                      width="${bottomWidth}" height="${bottomHeight}" rx="2"/>
+                ${showTopBottomLabel ? `<text class="svg-face-label"
+                      x="${bottomX + bottomWidth/2}" y="${bottomY + bottomHeight/2}">Bottom</text>` : ''}
+            </g>
+
+            <!-- Left strip (vertical, to the left of front) -->
+            <g class="svg-face svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left">
+                <rect class="svg-face-fill"
+                      x="${leftX}" y="${leftY}"
+                      width="${leftWidth}" height="${leftHeight}" rx="2"/>
+                ${showLeftRightLabel ? `<text class="svg-face-label"
+                      x="${leftX + leftWidth/2}" y="${leftY + leftHeight/2}"
+                      transform="rotate(-90, ${leftX + leftWidth/2}, ${leftY + leftHeight/2})">Left</text>` : ''}
+            </g>
+
+            <!-- Right strip (vertical, to the right of front) -->
+            <g class="svg-face svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
+                <rect class="svg-face-fill"
+                      x="${rightX}" y="${rightY}"
+                      width="${rightWidth}" height="${rightHeight}" rx="2"/>
+                ${showLeftRightLabel ? `<text class="svg-face-label"
+                      x="${rightX + rightWidth/2}" y="${rightY + rightHeight/2}"
+                      transform="rotate(90, ${rightX + rightWidth/2}, ${rightY + rightHeight/2})">Right</text>` : ''}
             </g>
 
             <!-- Front face (main rectangle - drawn last to be on top) -->
             <g class="svg-face svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
                 <rect class="svg-face-fill"
                       x="${frontX}" y="${frontY}"
-                      width="${rectWidth}" height="${rectHeight}" rx="4"/>
+                      width="${frontWidth}" height="${frontHeight}" rx="3"/>
                 <text class="svg-face-label"
-                      x="${frontX + rectWidth/2}" y="${frontY + rectHeight/2}">Front</text>
+                      x="${frontX + frontWidth/2}" y="${frontY + frontHeight/2}">Front</text>
             </g>
         </svg>`;
 
