@@ -1,247 +1,215 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spray Painting Area & Price Calculator</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>SprayCalc Pro</title> <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="js/app.js" defer></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="hero-pill">Precision spray planning</div>
-            <h1>Spray Painting Area & Price Calculator</h1>
-            <p>Create a clear brief for your sprayer with dimensions, colour data and a visual map of every coated face.</p>
-            <div class="hero-meta">
-                <span class="meta-chip">Live area & price preview</span>
-                <span class="meta-chip">Clickable 3D-style face map</span>
-                <span class="meta-chip">Reusable project template</span>
-            </div>
+            <div class="hero-pill">Professional Tool</div>
+            <h1>Spray Painting Calculator</h1>
+            <p>Configure dimensions and materials to get an instant quote.</p>
         </header>
 
         <div class="main-layout">
-            <!-- LEFT PANEL - Form -->
-            <div class="card">
-                <h2 class="card-title">Project & Element Details</h2>
-
-                <!-- Project Info -->
-                <div class="form-section">
-                    <div class="section-label">Project Info</div>
-                    <div class="form-group">
-                        <label for="projectName">Project name</label>
-                        <input type="text" id="projectName" placeholder="Enter project name">
-                    </div>
-                    <div class="form-group">
-                        <label for="clientSite">Client / site <span style="color: #6f81a3;">(optional)</span></label>
-                        <input type="text" id="clientSite" placeholder="Enter client or site name">
-                    </div>
-                </div>
-
-                <!-- Colour & Paint Info -->
-                <div class="form-section">
-                    <div class="section-label">Colour & Paint Info</div>
-                    <div class="form-group">
-                        <label for="colourName">Colour name</label>
-                        <input type="text" id="colourName" placeholder="e.g. Railings grey">
-                    </div>
-                    <div class="form-group">
-                        <label>Colour standard</label>
-                        <div class="radio-group">
-                            <label class="radio-option">
-                                <input type="radio" name="colourStandard" value="RAL" checked>
-                                <span>RAL</span>
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="colourStandard" value="Custom">
-                                <span>Custom name</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="conditional-field visible" id="ralCodeField">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="ralCode">RAL code</label>
-                            <input type="text" id="ralCode" placeholder="e.g. RAL 7016">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="paintManufacturer">Paint manufacturer</label>
-                        <input type="text" id="paintManufacturer" placeholder="e.g. F&B, Little Greene">
-                    </div>
-                    <div class="form-group">
-                        <label for="paintLocation">Paint location</label>
-                        <select id="paintLocation">
-                            <option value="internal">Internal</option>
-                            <option value="external">External</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Element Type -->
-                <div class="form-section">
-                    <div class="section-label">Element Type</div>
-                    <div class="form-group">
-                        <label for="elementType">Select element type</label>
-                        <select id="elementType">
-                            <option value="">-- Select type --</option>
-                            <option value="Flat">Flat</option>
-                            <option value="Shaker">Shaker</option>
-                            <option value="Veneer">Veneer</option>
-                            <option value="Timber">Timber</option>
-                            <option value="V-carve front (dense pattern)">V-carve front (dense pattern)</option>
-                            <option value="Door frame">Door frame</option>
-                            <option value="Sash window (3 elements)">Sash window (3 elements)</option>
-                            <option value="3D furniture panel">3D furniture panel</option>
-                        </select>
-                        <span class="error-msg" id="elementTypeError">Please select an element type</span>
-                    </div>
-                    <div class="form-group">
-                        <label for="pricePerM2">Price per m² (£)</label>
-                        <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="e.g. 35.00">
-                        <span class="error-msg" id="pricePerM2Error">Please enter a price</span>
-                    </div>
-                </div>
-
-                <!-- Dimensions -->
-                <div class="form-section">
-                    <div class="section-label">Dimensions (mm)</div>
-                    <div class="dimension-row">
+            <div class="left-panel">
+                <div class="card">
+                    <h2 class="card-title">1. Project Details</h2>
+                    
+                    <div class="form-section">
                         <div class="form-group">
-                            <label for="width">Width</label>
-                            <input type="number" id="width" min="1" step="1" placeholder="mm">
-                            <span class="error-msg" id="widthError">Required</span>
+                            <label for="projectName">Project Reference</label>
+                            <input type="text" id="projectName" placeholder="e.g. Kitchen Renovation London">
                         </div>
                         <div class="form-group">
-                            <label for="height">Height</label>
-                            <input type="number" id="height" min="1" step="1" placeholder="mm">
-                            <span class="error-msg" id="heightError">Required</span>
-                        </div>
-                        <div class="form-group">
-                            <label for="thickness">Thickness</label>
-                            <input type="number" id="thickness" min="1" step="1" placeholder="mm">
-                            <span class="error-msg" id="thicknessError">Required</span>
+                            <label for="clientSite">Client / Site</label>
+                            <input type="text" id="clientSite" placeholder="Optional client name">
                         </div>
                     </div>
-                </div>
 
-                <!-- Buttons -->
-                <div class="button-group">
-                    <button class="btn btn-primary" id="addElementBtn">Calculate & Add to Project</button>
-                    <button class="btn btn-secondary" id="resetProjectBtn">Reset Project</button>
+                    <h2 class="card-title" style="margin-top: 32px;">2. Specifications</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="colourName">Colour</label>
+                            <input type="text" id="colourName" placeholder="Colour name or code">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Standard</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="colourStandard" value="RAL" checked>
+                                    <span>RAL Standard</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="colourStandard" value="Custom">
+                                    <span>Custom Match</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="conditional-field visible" id="ralCodeField">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="ralCode">RAL Code</label>
+                                <input type="text" id="ralCode" placeholder="e.g. 7016">
+                            </div>
+                        </div>
+
+                        <div class="dimension-row" style="margin-top: 20px;">
+                            <div class="form-group">
+                                <label for="paintManufacturer">Manufacturer</label>
+                                <input type="text" id="paintManufacturer" placeholder="Brand">
+                            </div>
+                            <div class="form-group">
+                                <label for="paintLocation">Location</label>
+                                <select id="paintLocation">
+                                    <option value="internal">Internal</option>
+                                    <option value="external">External</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="card-title" style="margin-top: 32px;">3. Element Configuration</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="elementType">Material / Style</label>
+                            <select id="elementType">
+                                <option value="">Select type...</option>
+                                <option value="Flat">Flat Panel</option>
+                                <option value="Shaker">Shaker Style</option>
+                                <option value="Veneer">Veneer</option>
+                                <option value="Timber">Solid Timber</option>
+                                <option value="V-carve front (dense pattern)">V-Carve (Dense)</option>
+                                <option value="Door frame">Door Frame</option>
+                                <option value="Sash window (3 elements)">Sash Window</option>
+                                <option value="3D furniture panel">3D Panel</option>
+                            </select>
+                            <span class="error-msg" id="elementTypeError">Required</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="pricePerM2">Base Price (£/m²)</label>
+                            <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="0.00">
+                            <span class="error-msg" id="pricePerM2Error">Required</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-label">Dimensions (mm)</div>
+                        <div class="dimension-row">
+                            <div class="form-group">
+                                <label for="width">Width</label>
+                                <input type="number" id="width" min="1" step="1" placeholder="mm">
+                                <span class="error-msg" id="widthError">!</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="height">Height</label>
+                                <input type="number" id="height" min="1" step="1" placeholder="mm">
+                                <span class="error-msg" id="heightError">!</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="thickness">Thickness</label>
+                                <input type="number" id="thickness" min="1" step="1" placeholder="mm">
+                                <span class="error-msg" id="thicknessError">!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="resetProjectBtn">Reset</button>
+                        <button class="btn btn-primary" id="addElementBtn">Add to Quote (+)</button>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 32px;">
+                    <h2 class="card-title">Quote Breakdown</h2>
+                    <div class="summary-table-wrapper">
+                        <table class="summary-table" id="summaryTable">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Size (mm)</th>
+                                    <th>Faces</th>
+                                    <th>Area</th>
+                                    <th>Price</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryBody">
+                                </tbody>
+                        </table>
+                        <div class="empty-state" id="emptyState" style="padding: 20px; text-align: center; color: #94a3b8;">
+                            No items added yet.
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- RIGHT PANEL -->
             <div class="right-panel">
-                <!-- Visualisation -->
                 <div class="card">
                     <div class="card-title-row">
-                        <h2 class="card-title">Select Faces to Spray</h2>
-                        <div class="title-badge">Interactive model</div>
+                        <h2 class="card-title">Interactive Preview</h2>
+                        <span class="title-badge">Live</span>
                     </div>
-                    <p class="section-lede">Tap the diagram to toggle sides. The neon-highlighted faces show exactly what will be coated.</p>
+                    
+                    <p class="section-lede">Click faces below to include them in the calculation.</p>
+
                     <div class="visualisation-container">
-                        <!-- Face Selection Container with SVG Diagram and Legend -->
-                        <div class="face-selection-container">
-                            <!-- SVG Proportional Diagram (dynamically rendered by JS) -->
-                            <div class="svg-diagram-wrapper" id="svgDiagramWrapper">
-                                <!-- SVG will be inserted here by JavaScript -->
+                        <div class="svg-diagram-wrapper" id="svgDiagramWrapper">
                             </div>
-
-                            <!-- Legend with checkboxes -->
-                            <div class="face-legend">
-                                <div class="legend-header">
-                                    <div class="legend-title">Faces</div>
-                                    <div class="legend-subtitle">Glow = selected</div>
-                                </div>
-                                <label class="legend-item selected" data-face="front">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Front</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="front" checked>
-                                </label>
-                                <label class="legend-item" data-face="back">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Back</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="back">
-                                </label>
-                                <label class="legend-item" data-face="top">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Top</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="top">
-                                </label>
-                                <label class="legend-item" data-face="bottom">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Bottom</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="bottom">
-                                </label>
-                                <label class="legend-item" data-face="left">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Left</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="left">
-                                </label>
-                                <label class="legend-item" data-face="right">
-                                    <span class="legend-color"></span>
-                                    <span class="legend-label">Right</span>
-                                    <input type="checkbox" class="legend-checkbox" data-face="right">
-                                </label>
+                        
+                        <div class="face-legend">
+                            <div class="legend-item selected" data-face="front">Front</div>
+                            <div class="legend-item" data-face="back">Back</div>
+                            <div class="legend-item" data-face="top">Top</div>
+                            <div class="legend-item" data-face="bottom">Btm</div>
+                            <div class="legend-item" data-face="left">Left</div>
+                            <div class="legend-item" data-face="right">Right</div>
+                            
+                            <div style="display:none;">
+                                <input type="checkbox" class="legend-checkbox" data-face="front" checked>
+                                <input type="checkbox" class="legend-checkbox" data-face="back">
+                                <input type="checkbox" class="legend-checkbox" data-face="top">
+                                <input type="checkbox" class="legend-checkbox" data-face="bottom">
+                                <input type="checkbox" class="legend-checkbox" data-face="left">
+                                <input type="checkbox" class="legend-checkbox" data-face="right">
                             </div>
                         </div>
 
-                        <!-- Dimension Display -->
-                        <div class="dimension-display">
-                            <div class="dims" id="dimensionDisplayDims">Width: - mm, Height: - mm, Thickness: - mm</div>
-                            <div class="note">Approximate proportional visualisation (not to scale)</div>
+                        <span class="error-msg" id="facesError" style="text-align: center;">Select at least one face</span>
+
+                        <div class="dimension-display" style="display:none;">
+                            <div class="dims" id="dimensionDisplayDims"></div>
                         </div>
 
-                        <p class="face-hint">Click on the 3D faces or use the checkboxes to choose which sides will be sprayed.</p>
-                        <span class="error-msg" id="facesError" style="text-align: center; margin-top: 8px;">Please select at least one face</span>
-
-                        <!-- Calculation Result -->
                         <div class="calc-result">
                             <div class="calc-row">
-                                <span class="calc-label">Selected faces:</span>
+                                <span class="calc-label">Selected Faces</span>
                                 <span class="calc-value" id="selectedFacesDisplay">Front</span>
                             </div>
                             <div class="calc-row">
-                                <span class="calc-label">Area to spray:</span>
+                                <span class="calc-label">Total Area</span>
                                 <span class="calc-value" id="areaDisplay">0.000 m²</span>
                             </div>
                             <div class="calc-row">
-                                <span class="calc-label">Price for this element:</span>
+                                <span class="calc-label">Item Price</span>
                                 <span class="calc-value price" id="priceDisplay">£0.00</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Project Summary -->
-                <div class="card">
-                    <h2 class="card-title">Project Elements</h2>
-                    <div class="summary-table-wrapper">
-                        <table class="summary-table" id="summaryTable">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Dimensions</th>
-                                    <th>Faces</th>
-                                    <th>Area (m²)</th>
-                                    <th>Location</th>
-                                    <th>Price</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="summaryBody">
-                                <!-- Elements will be added here -->
-                            </tbody>
-                        </table>
-                        <div class="empty-state" id="emptyState">
-                            <div class="icon">📋</div>
-                            <p>No elements added yet.<br>Fill in the form and click "Calculate & Add"</p>
-                        </div>
-                    </div>
-                    <div class="project-total">
-                        <span class="label">Project Total:</span>
+                <div class="project-total">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="label">Total Quote</span>
                         <span class="value" id="projectTotal">£0.00</span>
                     </div>
                 </div>
