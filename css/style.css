@@ -226,7 +226,7 @@ input::placeholder {
 }
 
 /* ========================================
-   PROPORTIONAL ELEMENT VISUALISATION (SVG)
+   PSEUDO-3D ELEMENT VISUALISATION (SVG)
    ======================================== */
 
 .visualisation-container {
@@ -260,55 +260,103 @@ input::placeholder {
     max-height: 100%;
 }
 
+/* ========================================
+   3D FACE POLYGON STYLES
+   ======================================== */
+
 /* Clickable face regions in SVG */
-.svg-face {
+.svg-face-3d {
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-/* Unselected face fill */
-.svg-face-fill {
-    fill: #E6EAD5;
-    stroke: #C5CDB0;
+/* Front face - slightly darker olive */
+.svg-face-front .face-polygon {
+    fill: #D8DEC8;
+    stroke: #8F9779;
     stroke-width: 2;
     transition: all 0.2s ease;
 }
 
-.svg-face:hover .svg-face-fill {
-    fill: #D8DEC8;
-    stroke: #556B2F;
-}
-
-/* Selected face styling */
-.svg-face.selected .svg-face-fill {
-    fill: url(#selectedGradient);
+.svg-face-front:hover .face-polygon {
+    fill: #CCD4B8;
     stroke: #556B2F;
     stroke-width: 2.5;
 }
 
+.svg-face-front.selected .face-polygon {
+    fill: url(#frontSelectedGradient);
+    stroke: #3D4F22;
+    stroke-width: 2.5;
+}
+
+/* Top face - lighter olive (receives more light) */
+.svg-face-top .face-polygon {
+    fill: #E8ECE0;
+    stroke: #A8B090;
+    stroke-width: 2;
+    transition: all 0.2s ease;
+}
+
+.svg-face-top:hover .face-polygon {
+    fill: #DCE2D0;
+    stroke: #556B2F;
+    stroke-width: 2.5;
+}
+
+.svg-face-top.selected .face-polygon {
+    fill: url(#topSelectedGradient);
+    stroke: #3D4F22;
+    stroke-width: 2.5;
+}
+
+/* Right face - medium olive (side lighting) */
+.svg-face-right .face-polygon {
+    fill: #C5CDB0;
+    stroke: #8F9779;
+    stroke-width: 2;
+    transition: all 0.2s ease;
+}
+
+.svg-face-right:hover .face-polygon {
+    fill: #B8C2A0;
+    stroke: #556B2F;
+    stroke-width: 2.5;
+}
+
+.svg-face-right.selected .face-polygon {
+    fill: url(#rightSelectedGradient);
+    stroke: #3D4F22;
+    stroke-width: 2.5;
+}
+
 /* Face labels in SVG */
-.svg-face-label {
-    font-size: 11px;
+.face-label-text {
+    font-size: 12px;
     font-weight: 600;
-    fill: #8F9779;
+    fill: #6B7A5A;
     pointer-events: none;
     user-select: none;
     text-anchor: middle;
     dominant-baseline: middle;
 }
 
-.svg-face.selected .svg-face-label {
+.svg-face-3d.selected .face-label-text {
     fill: #2D3B1F;
     font-weight: 700;
 }
 
-/* Back face dashed style (behind front) */
-.svg-face-back .svg-face-fill {
-    stroke-dasharray: 4 2;
+/* 3D edge lines for depth effect */
+.edge-line {
+    stroke: #8F9779;
+    stroke-width: 1.5;
+    fill: none;
 }
 
-.svg-face-back.selected .svg-face-fill {
-    stroke-dasharray: none;
+.edge-line-dark {
+    stroke: #6B7A5A;
+    stroke-width: 2;
+    fill: none;
 }
 
 /* Legend with checkboxes */
