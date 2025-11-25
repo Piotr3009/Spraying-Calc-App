@@ -313,20 +313,37 @@ document.addEventListener('DOMContentLoaded', function() {
             <defs>
                 <!-- Gradient for selected front face -->
                 <linearGradient id="frontSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#8FBC5A"/>
-                    <stop offset="100%" style="stop-color:#6B8E23"/>
+                    <stop offset="0%" style="stop-color:#a2f6c5"/>
+                    <stop offset="100%" style="stop-color:#53c2ff"/>
                 </linearGradient>
                 <!-- Gradient for selected top face (lighter) -->
                 <linearGradient id="topSelectedGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#A8D468"/>
-                    <stop offset="100%" style="stop-color:#8FBC5A"/>
+                    <stop offset="0%" style="stop-color:#b8f8d4"/>
+                    <stop offset="100%" style="stop-color:#7ed8ff"/>
                 </linearGradient>
                 <!-- Gradient for selected right face (medium) -->
                 <linearGradient id="rightSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#7AA53E"/>
-                    <stop offset="100%" style="stop-color:#556B2F"/>
+                    <stop offset="0%" style="stop-color:#6bcfaa"/>
+                    <stop offset="100%" style="stop-color:#3ba8e0"/>
                 </linearGradient>
+                <!-- Panel background gradient -->
+                <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#1d2738" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#0f1625" stop-opacity="0.98"/>
+                </linearGradient>
+                <!-- Glow filter for selected faces -->
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
             </defs>
+
+            <!-- Background panel -->
+            <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" rx="18" class="scene-backdrop" fill="url(#panelGradient)" />
+            <rect x="12" y="12" width="${svgWidth - 24}" height="${svgHeight - 24}" rx="14" class="scene-grid" />
 
             <!-- Back edges (dashed lines to show hidden edges) -->
             <line class="edge-line"
@@ -339,19 +356,19 @@ document.addEventListener('DOMContentLoaded', function() {
                   stroke-dasharray="4 3" opacity="0.4"/>
 
             <!-- Top face (parallelogram - draw first so it's behind) -->
-            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
+            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(topPoints)}"/>
                 <text class="face-label-text" x="${topCenter[0]}" y="${topCenter[1]}">Top</text>
             </g>
 
             <!-- Right face (parallelogram) -->
-            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
+            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(rightPoints)}"/>
                 <text class="face-label-text" x="${rightCenter[0]}" y="${rightCenter[1]}">Right</text>
             </g>
 
             <!-- Front face (main rectangle - drawn last to be on top) -->
-            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
+            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(frontPoints)}"/>
                 <text class="face-label-text" x="${frontCenter[0]}" y="${frontCenter[1]}">Front</text>
             </g>
