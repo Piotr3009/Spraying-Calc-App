@@ -238,104 +238,191 @@
             align-items: center;
         }
 
-        .cube-wrapper {
-            perspective: 800px;
-            margin: 20px 0;
+        /* Face selector layout: diagram + legend side by side */
+        .face-selector-wrapper {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+            margin: 10px 0 20px;
         }
 
-        .cube-3d {
+        /* 2D Schematic diagram of 3D block */
+        .block-diagram {
             position: relative;
-            width: 200px;
-            height: 150px;
-            transform-style: preserve-3d;
-            transform: rotateX(-15deg) rotateY(-25deg);
+            width: 220px;
+            height: 200px;
+            flex-shrink: 0;
         }
 
-        .face {
+        /* Base face styling */
+        .diagram-face {
             position: absolute;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
-            font-weight: 600;
-            color: #5a7a9a;
-            background: #f0f7fc;
-            border: 2px solid #c5ddf5;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-
-        .face:hover {
-            border-color: #1565c0;
-            background: #e3f2fd;
-        }
-
-        .face.selected {
-            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
-            border-color: #1565c0;
-            color: #0d47a1;
-            box-shadow: 0 0 12px rgba(21, 101, 192, 0.3);
-        }
-
-        /* Schematic 2D layout of faces */
-        .faces-schematic {
-            display: grid;
-            grid-template-columns: repeat(4, 80px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .face-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 500;
             color: #5a7a9a;
             background: #f5faff;
-            border: 2px solid #d0e4f7;
-            border-radius: 10px;
+            border: 2px solid #c5ddf5;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
         }
 
-        .face-btn:hover {
-            border-color: #1565c0;
+        .diagram-face:hover {
+            border-color: #1976d2;
             background: #e8f4fc;
-            transform: scale(1.02);
         }
 
-        .face-btn.selected {
-            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+        .diagram-face.selected {
+            background: linear-gradient(135deg, #90caf9 0%, #64b5f6 100%);
             border-color: #1565c0;
             color: #0d47a1;
-            box-shadow: 0 2px 8px rgba(21, 101, 192, 0.25);
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px rgba(21, 101, 192, 0.3);
         }
 
-        .face-btn .face-icon {
-            font-size: 1.2rem;
-            margin-bottom: 2px;
+        /* Back face - offset rectangle behind front */
+        .diagram-back {
+            left: 50px;
+            top: 10px;
+            width: 140px;
+            height: 100px;
+            border-radius: 4px;
+            z-index: 1;
         }
 
-        /* Position faces in schematic grid */
-        .face-top { grid-column: 2; grid-row: 1; }
-        .face-left { grid-column: 1; grid-row: 2; }
-        .face-front { grid-column: 2; grid-row: 2; }
-        .face-right { grid-column: 3; grid-row: 2; }
-        .face-back { grid-column: 4; grid-row: 2; }
-        .face-bottom { grid-column: 2; grid-row: 3; }
+        /* Top face - parallelogram strip on top */
+        .diagram-top {
+            left: 30px;
+            top: 30px;
+            width: 140px;
+            height: 28px;
+            border-radius: 3px;
+            z-index: 2;
+            transform: skewX(-30deg);
+        }
+
+        /* Left face - thin strip on left side */
+        .diagram-left {
+            left: 10px;
+            top: 58px;
+            width: 28px;
+            height: 100px;
+            border-radius: 3px;
+            z-index: 2;
+            transform: skewY(-30deg);
+        }
+
+        /* Front face - main rectangle */
+        .diagram-front {
+            left: 30px;
+            top: 58px;
+            width: 140px;
+            height: 100px;
+            border-radius: 4px;
+            z-index: 3;
+            font-size: 0.85rem;
+        }
+
+        /* Right face - thin strip on right side */
+        .diagram-right {
+            left: 170px;
+            top: 30px;
+            width: 28px;
+            height: 100px;
+            border-radius: 3px;
+            z-index: 2;
+            transform: skewY(30deg);
+        }
+
+        /* Bottom face - strip at the bottom */
+        .diagram-bottom {
+            left: 58px;
+            top: 158px;
+            width: 140px;
+            height: 28px;
+            border-radius: 3px;
+            z-index: 2;
+            transform: skewX(-30deg);
+        }
+
+        /* Face legend with checkboxes */
+        .face-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #fafcff;
+            border-radius: 10px;
+            border: 1px solid #e3f2fd;
+        }
+
+        .face-legend-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5a7a9a;
+            margin-bottom: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .legend-item:hover {
+            background: #e8f4fc;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: #f0f7fc;
+            border: 2px solid #c5ddf5;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .legend-item.selected .legend-color {
+            background: linear-gradient(135deg, #90caf9 0%, #64b5f6 100%);
+            border-color: #1565c0;
+        }
+
+        .legend-label {
+            font-size: 0.85rem;
+            color: #1e3a5f;
+            flex-grow: 1;
+        }
+
+        .legend-item.selected .legend-label {
+            font-weight: 600;
+            color: #0d47a1;
+        }
+
+        .legend-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #1565c0;
+            cursor: pointer;
+        }
 
         .face-hint {
             text-align: center;
             font-size: 0.8rem;
             color: #7a9ab5;
-            margin-top: 16px;
+            margin-top: 8px;
+            line-height: 1.5;
+            max-width: 400px;
         }
 
         /* Calculation result */
@@ -481,9 +568,26 @@
                 grid-template-columns: 1fr;
             }
 
-            .faces-schematic {
-                grid-template-columns: repeat(4, 70px);
-                grid-template-rows: repeat(3, 50px);
+            .face-selector-wrapper {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .face-legend {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .face-legend-title {
+                width: 100%;
+                text-align: center;
+            }
+
+            .legend-item {
+                padding: 4px 8px;
             }
         }
     </style>
@@ -615,34 +719,61 @@
                 <div class="card">
                     <h2 class="card-title">Select Faces to Spray</h2>
                     <div class="visualisation-container">
-                        <!-- 2D Schematic layout of cube faces -->
-                        <div class="faces-schematic">
-                            <button class="face-btn face-top" data-face="top">
-                                <span class="face-icon">⬆</span>
-                                <span>Top</span>
-                            </button>
-                            <button class="face-btn face-left" data-face="left">
-                                <span class="face-icon">◀</span>
-                                <span>Left</span>
-                            </button>
-                            <button class="face-btn face-front selected" data-face="front">
-                                <span class="face-icon">◼</span>
-                                <span>Front</span>
-                            </button>
-                            <button class="face-btn face-right" data-face="right">
-                                <span class="face-icon">▶</span>
-                                <span>Right</span>
-                            </button>
-                            <button class="face-btn face-back" data-face="back">
-                                <span class="face-icon">◻</span>
-                                <span>Back</span>
-                            </button>
-                            <button class="face-btn face-bottom" data-face="bottom">
-                                <span class="face-icon">⬇</span>
-                                <span>Bottom</span>
-                            </button>
+                        <!-- Face selector: 2D diagram + legend with checkboxes -->
+                        <div class="face-selector-wrapper">
+                            <!-- 2D Schematic diagram of 3D block -->
+                            <div class="block-diagram">
+                                <!-- Back face - offset behind front -->
+                                <div class="diagram-face diagram-back" data-face="back">Back</div>
+                                <!-- Top face - strip on top -->
+                                <div class="diagram-face diagram-top" data-face="top">Top</div>
+                                <!-- Left face - strip on left -->
+                                <div class="diagram-face diagram-left" data-face="left">Left</div>
+                                <!-- Front face - main rectangle (selected by default) -->
+                                <div class="diagram-face diagram-front selected" data-face="front">Front</div>
+                                <!-- Right face - strip on right -->
+                                <div class="diagram-face diagram-right" data-face="right">Right</div>
+                                <!-- Bottom face - strip at bottom -->
+                                <div class="diagram-face diagram-bottom" data-face="bottom">Bottom</div>
+                            </div>
+
+                            <!-- Legend with checkboxes -->
+                            <div class="face-legend">
+                                <div class="face-legend-title">Face Selection</div>
+                                <label class="legend-item selected" data-face="front">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Front</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="front" checked>
+                                </label>
+                                <label class="legend-item" data-face="back">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Back</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="back">
+                                </label>
+                                <label class="legend-item" data-face="top">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Top</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="top">
+                                </label>
+                                <label class="legend-item" data-face="bottom">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Bottom</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="bottom">
+                                </label>
+                                <label class="legend-item" data-face="left">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Left</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="left">
+                                </label>
+                                <label class="legend-item" data-face="right">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Right</span>
+                                    <input type="checkbox" class="legend-checkbox" data-face="right">
+                                </label>
+                            </div>
                         </div>
-                        <p class="face-hint">Click faces to toggle spray selection</p>
+
+                        <p class="face-hint">Click on the faces or use the checkboxes on the right to choose which sides will be sprayed.</p>
                         <span class="error-msg" id="facesError" style="text-align: center; margin-top: 8px;">Please select at least one face</span>
 
                         <!-- Calculation Result -->
@@ -784,7 +915,10 @@
             const thicknessInput = document.getElementById('thickness');
             const addElementBtn = document.getElementById('addElementBtn');
             const resetProjectBtn = document.getElementById('resetProjectBtn');
-            const faceButtons = document.querySelectorAll('.face-btn');
+            // Diagram face elements and legend checkboxes
+            const diagramFaces = document.querySelectorAll('.diagram-face');
+            const legendItems = document.querySelectorAll('.legend-item');
+            const legendCheckboxes = document.querySelectorAll('.legend-checkbox');
             const selectedFacesDisplay = document.getElementById('selectedFacesDisplay');
             const areaDisplay = document.getElementById('areaDisplay');
             const priceDisplay = document.getElementById('priceDisplay');
@@ -871,16 +1005,33 @@
             // =========================================================
             // FACE SELECTION HANDLERS
             // ---------------------------------------------------------
-            // Toggles face selection and updates the UI.
+            // Toggles face selection and updates both the diagram
+            // and the legend checkboxes to stay in sync.
             // =========================================================
             function updateFaceUI() {
-                faceButtons.forEach(btn => {
-                    const faceName = btn.dataset.face;
+                // Update diagram faces
+                diagramFaces.forEach(face => {
+                    const faceName = face.dataset.face;
                     if (faces[faceName].selected) {
-                        btn.classList.add('selected');
+                        face.classList.add('selected');
                     } else {
-                        btn.classList.remove('selected');
+                        face.classList.remove('selected');
                     }
+                });
+
+                // Update legend items and checkboxes
+                legendItems.forEach(item => {
+                    const faceName = item.dataset.face;
+                    if (faces[faceName].selected) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+
+                legendCheckboxes.forEach(checkbox => {
+                    const faceName = checkbox.dataset.face;
+                    checkbox.checked = faces[faceName].selected;
                 });
 
                 // Update selected faces display
@@ -1189,10 +1340,20 @@
                 radio.addEventListener('change', updateRalCodeVisibility);
             });
 
-            // Face button clicks
-            faceButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
+            // Diagram face clicks - toggle face selection
+            diagramFaces.forEach(face => {
+                face.addEventListener('click', function() {
                     toggleFace(this.dataset.face);
+                });
+            });
+
+            // Legend checkbox changes - toggle face selection
+            // (clicking the label also triggers the checkbox due to <label> wrapping)
+            legendCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const faceName = this.dataset.face;
+                    faces[faceName].selected = this.checked;
+                    updateFaceUI();
                 });
             });
 
