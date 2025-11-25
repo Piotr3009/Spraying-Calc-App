@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SprayCalc Pro</title> <link rel="stylesheet" href="css/style.css">
+    <title>SprayCalc Pro - Shaker Edition</title>
+    <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,55 +15,51 @@
         <header>
             <div class="hero-pill">Professional Tool</div>
             <h1>Spray Painting Calculator</h1>
-            <p>Configure dimensions and materials to get an instant quote.</p>
         </header>
 
         <div class="main-layout">
             <div class="left-panel">
-                <div class="card">
-                    <h2 class="card-title">1. Project Details</h2>
+                <div class="card compact-card">
+                    <h2 class="card-title compact-title">Project & Specs</h2>
                     
-                    <div class="form-section">
-                        <div class="form-group">
-                            <label for="projectName">Project Reference</label>
-                            <input type="text" id="projectName" placeholder="e.g. Kitchen Renovation London">
-                        </div>
-                        <div class="form-group">
-                            <label for="clientSite">Client / Site</label>
-                            <input type="text" id="clientSite" placeholder="Optional client name">
-                        </div>
-                    </div>
-
-                    <h2 class="card-title" style="margin-top: 32px;">2. Specifications</h2>
-                    
-                    <div class="form-section">
-                        <div class="form-group">
-                            <label for="colourName">Colour</label>
-                            <input type="text" id="colourName" placeholder="Colour name or code">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Standard</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="colourStandard" value="RAL" checked>
-                                    <span>RAL Standard</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="colourStandard" value="Custom">
-                                    <span>Custom Match</span>
-                                </label>
+                    <div class="form-section compact-section">
+                        <div class="form-row-compact">
+                            <div class="form-group">
+                                <label for="projectName">Project Reference</label>
+                                <input type="text" id="projectName" placeholder="e.g. Kitchen Renovation">
+                            </div>
+                            <div class="form-group">
+                                <label for="clientSite">Client / Site</label>
+                                <input type="text" id="clientSite" placeholder="Optional">
                             </div>
                         </div>
 
-                        <div class="conditional-field visible" id="ralCodeField">
+                        <div class="form-row-compact" style="align-items: end;">
+                             <div class="form-group" style="flex: 2;">
+                                <label for="colourName">Colour</label>
+                                <input type="text" id="colourName" placeholder="Name or code">
+                            </div>
+                            <div class="form-group" style="flex: 3;">
+                                <div class="radio-group compact-radio">
+                                    <label class="radio-option">
+                                        <input type="radio" name="colourStandard" value="RAL" checked>
+                                        <span>RAL</span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="colourStandard" value="Custom">
+                                        <span>Custom</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="conditional-field visible compact-conditional" id="ralCodeField">
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label for="ralCode">RAL Code</label>
-                                <input type="text" id="ralCode" placeholder="e.g. 7016">
+                                <input type="text" id="ralCode" placeholder="Enter RAL Code (e.g. 7016)">
                             </div>
                         </div>
 
-                        <div class="dimension-row" style="margin-top: 20px;">
+                        <div class="form-row-compact">
                             <div class="form-group">
                                 <label for="paintManufacturer">Manufacturer</label>
                                 <input type="text" id="paintManufacturer" placeholder="Brand">
@@ -76,63 +73,66 @@
                             </div>
                         </div>
                     </div>
-
-                    <h2 class="card-title" style="margin-top: 32px;">3. Element Configuration</h2>
                     
-                    <div class="form-section">
-                        <div class="form-group">
-                            <label for="elementType">Material / Style</label>
-                            <select id="elementType">
-                                <option value="">Select type...</option>
-                                <option value="Flat">Flat Panel</option>
-                                <option value="Shaker">Shaker Style</option>
-                                <option value="Veneer">Veneer</option>
-                                <option value="Timber">Solid Timber</option>
-                                <option value="V-carve front (dense pattern)">V-Carve (Dense)</option>
-                                <option value="Door frame">Door Frame</option>
-                                <option value="Sash window (3 elements)">Sash Window</option>
-                                <option value="3D furniture panel">3D Panel</option>
-                            </select>
-                            <span class="error-msg" id="elementTypeError">Required</span>
-                        </div>
-                        <div class="form-group">
-                            <label for="pricePerM2">Base Price (£/m²)</label>
-                            <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="0.00">
-                            <span class="error-msg" id="pricePerM2Error">Required</span>
+                    <div style="border-top: 1px solid var(--border); margin: 16px 0;"></div>
+
+                    <h2 class="card-title compact-title">Element Configuration</h2>
+                    
+                    <div class="form-section compact-section">
+                        <div class="form-row-compact">
+                            <div class="form-group" style="flex: 3;">
+                                <label for="elementType">Material / Style</label>
+                                <select id="elementType">
+                                    <option value="Shaker" selected>Shaker Style (MDF/Timber)</option>
+                                    <option value="Flat">Flat Panel</option>
+                                    <option value="Veneer">Veneer</option>
+                                    <option value="Timber">Solid Timber</option>
+                                    <option value="V-carve front (dense pattern)">V-Carve (Dense)</option>
+                                    <option value="Door frame">Door Frame</option>
+                                    <option value="Sash window (3 elements)">Sash Window</option>
+                                    <option value="3D furniture panel">3D Panel</option>
+                                </select>
+                                <span class="error-msg" id="elementTypeError">Required</span>
+                            </div>
+                            <div class="form-group" style="flex: 2;">
+                                <label for="pricePerM2">Price (£/m²)</label>
+                                <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="0.00">
+                                <span class="error-msg" id="pricePerM2Error">Required</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <div class="section-label">Dimensions (mm)</div>
-                        <div class="dimension-row">
+                    <div class="form-section compact-section">
+                        <div class="section-label compact-label">Dimensions (mm)</div>
+                        <div class="dimension-row compact-dims">
                             <div class="form-group">
                                 <label for="width">Width</label>
-                                <input type="number" id="width" min="1" step="1" placeholder="mm">
+                                <input type="number" id="width" min="1" step="1" placeholder="W">
                                 <span class="error-msg" id="widthError">!</span>
                             </div>
                             <div class="form-group">
                                 <label for="height">Height</label>
-                                <input type="number" id="height" min="1" step="1" placeholder="mm">
+                                <input type="number" id="height" min="1" step="1" placeholder="H">
                                 <span class="error-msg" id="heightError">!</span>
                             </div>
                             <div class="form-group">
-                                <label for="thickness">Thickness</label>
-                                <input type="number" id="thickness" min="1" step="1" placeholder="mm">
+                                <label for="thickness">Thick.</label>
+                                <input type="number" id="thickness" min="1" step="1" placeholder="T">
                                 <span class="error-msg" id="thicknessError">!</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="button-group">
+                    <div class="button-group compact-buttons">
                         <button class="btn btn-secondary" id="resetProjectBtn">Reset</button>
                         <button class="btn btn-primary" id="addElementBtn">Add to Quote (+)</button>
                     </div>
                 </div>
                 
-                <div class="card" style="margin-top: 32px;">
-                    <h2 class="card-title">Quote Breakdown</h2>
+                <div class="card compact-card" style="margin-top: 24px; padding: 16px;">
+                    <h2 class="card-title compact-title" style="margin-bottom: 12px;">Quote Breakdown</h2>
                     <div class="summary-table-wrapper">
-                        <table class="summary-table" id="summaryTable">
+                        <table class="summary-table compact-table" id="summaryTable">
                             <thead>
                                 <tr>
                                     <th>Item</th>
@@ -146,7 +146,7 @@
                             <tbody id="summaryBody">
                                 </tbody>
                         </table>
-                        <div class="empty-state" id="emptyState" style="padding: 20px; text-align: center; color: #94a3b8;">
+                        <div class="empty-state compact-empty" id="emptyState">
                             No items added yet.
                         </div>
                     </div>
@@ -156,24 +156,23 @@
             <div class="right-panel">
                 <div class="card">
                     <div class="card-title-row">
-                        <h2 class="card-title">Interactive Preview</h2>
-                        <span class="title-badge">Live</span>
+                        <h2 class="card-title">Shaker Model Preview</h2>
+                        <span class="title-badge">Interactive</span>
                     </div>
                     
-                    <p class="section-lede">Click faces below to include them in the calculation.</p>
+                    <p class="section-lede">Click faces on the model to select areas for spraying.</p>
 
                     <div class="visualisation-container">
-                        <div class="svg-diagram-wrapper" id="svgDiagramWrapper">
+                        <div class="svg-diagram-wrapper shaker-wrapper" id="svgDiagramWrapper">
                             </div>
                         
-                        <div class="face-legend">
-                            <div class="legend-item selected" data-face="front">Front</div>
+                        <div class="face-legend compact-legend">
+                            <div class="legend-item selected" data-face="front">Front (Shaker)</div>
                             <div class="legend-item" data-face="back">Back</div>
                             <div class="legend-item" data-face="top">Top</div>
-                            <div class="legend-item" data-face="bottom">Btm</div>
+                            <div class="legend-item" data-face="bottom">Bottom</div>
                             <div class="legend-item" data-face="left">Left</div>
                             <div class="legend-item" data-face="right">Right</div>
-                            
                             <div style="display:none;">
                                 <input type="checkbox" class="legend-checkbox" data-face="front" checked>
                                 <input type="checkbox" class="legend-checkbox" data-face="back">
@@ -185,29 +184,26 @@
                         </div>
 
                         <span class="error-msg" id="facesError" style="text-align: center;">Select at least one face</span>
+                        <div class="dimension-display" style="display:none;"><div class="dims" id="dimensionDisplayDims"></div></div>
 
-                        <div class="dimension-display" style="display:none;">
-                            <div class="dims" id="dimensionDisplayDims"></div>
-                        </div>
-
-                        <div class="calc-result">
+                        <div class="calc-result compact-result">
                             <div class="calc-row">
-                                <span class="calc-label">Selected Faces</span>
+                                <span class="calc-label">Selected:</span>
                                 <span class="calc-value" id="selectedFacesDisplay">Front</span>
                             </div>
                             <div class="calc-row">
-                                <span class="calc-label">Total Area</span>
+                                <span class="calc-label">Total Area:</span>
                                 <span class="calc-value" id="areaDisplay">0.000 m²</span>
                             </div>
                             <div class="calc-row">
-                                <span class="calc-label">Item Price</span>
+                                <span class="calc-label">Item Price:</span>
                                 <span class="calc-value price" id="priceDisplay">£0.00</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="project-total">
+                <div class="project-total compact-total">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="label">Total Quote</span>
                         <span class="value" id="projectTotal">£0.00</span>
