@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spray Painting Area & Price Calculator</title>
+    <style>
+        /* ========================================
+           CSS STYLES - Blue-themed modern design
+           ======================================== */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e8f4fc 0%, #f0f7fc 100%);
+            min-height: 100vh;
+            color: #1e3a5f;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0 30px;
+        }
+
+        header h1 {
+            color: #1565c0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #5a7a9a;
+            font-size: 0.95rem;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* Card styling */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(21, 101, 192, 0.08);
+            padding: 24px;
+            border: 1px solid rgba(21, 101, 192, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        /* Form styling */
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5a7a9a;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1e3a5f;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d0e4f7;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #1e3a5f;
+            background: #fafcff;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #1565c0;
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+            background: #ffffff;
+        }
+
+        input::placeholder {
+            color: #9bb5cf;
+        }
+
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1565c0;
+            cursor: pointer;
+        }
+
+        .radio-option span {
+            font-size: 0.85rem;
+            color: #1e3a5f;
+        }
+
+        /* Conditional field */
+        .conditional-field {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: #f5faff;
+            border-radius: 8px;
+            border: 1px dashed #b3d4f7;
+        }
+
+        .conditional-field.visible {
+            display: block;
+        }
+
+        /* Dimension inputs row */
+        .dimension-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .dimension-row .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(21, 101, 192, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f9fc;
+            color: #5a7a9a;
+            border: 1.5px solid #d0e4f7;
+        }
+
+        .btn-secondary:hover {
+            background: #edf4fa;
+            color: #1565c0;
+            border-color: #1565c0;
+        }
+
+        /* Right panel */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 3D Visualisation */
+        .visualisation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cube-wrapper {
+            perspective: 800px;
+            margin: 20px 0;
+        }
+
+        .cube-3d {
+            position: relative;
+            width: 200px;
+            height: 150px;
+            transform-style: preserve-3d;
+            transform: rotateX(-15deg) rotateY(-25deg);
+        }
+
+        .face {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #5a7a9a;
+            background: #f0f7fc;
+            border: 2px solid #c5ddf5;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .face:hover {
+            border-color: #1565c0;
+            background: #e3f2fd;
+        }
+
+        .face.selected {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            border-color: #1565c0;
+            color: #0d47a1;
+            box-shadow: 0 0 12px rgba(21, 101, 192, 0.3);
+        }
+
+        /* Schematic 2D layout of faces */
+        .faces-schematic {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .face-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #5a7a9a;
+            background: #f5faff;
+            border: 2px solid #d0e4f7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .face-btn:hover {
+            border-color: #1565c0;
+            background: #e8f4fc;
+            transform: scale(1.02);
+        }
+
+        .face-btn.selected {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            border-color: #1565c0;
+            color: #0d47a1;
+            box-shadow: 0 2px 8px rgba(21, 101, 192, 0.25);
+        }
+
+        .face-btn .face-icon {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+        }
+
+        /* Position faces in schematic grid */
+        .face-top { grid-column: 2; grid-row: 1; }
+        .face-left { grid-column: 1; grid-row: 2; }
+        .face-front { grid-column: 2; grid-row: 2; }
+        .face-right { grid-column: 3; grid-row: 2; }
+        .face-back { grid-column: 4; grid-row: 2; }
+        .face-bottom { grid-column: 2; grid-row: 3; }
+
+        .face-hint {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #7a9ab5;
+            margin-top: 16px;
+        }
+
+        /* Calculation result */
+        .calc-result {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f5faff 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            border: 1px solid #b3d4f7;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .calc-row:not(:last-child) {
+            border-bottom: 1px solid #d0e4f7;
+        }
+
+        .calc-label {
+            font-size: 0.85rem;
+            color: #5a7a9a;
+        }
+
+        .calc-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1565c0;
+        }
+
+        .calc-value.price {
+            font-size: 1.2rem;
+            color: #0d47a1;
+        }
+
+        /* Project summary table */
+        .summary-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .summary-table th {
+            background: #f0f7fc;
+            color: #1565c0;
+            font-weight: 600;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid #d0e4f7;
+            white-space: nowrap;
+        }
+
+        .summary-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e8f4fc;
+            color: #1e3a5f;
+        }
+
+        .summary-table tr:hover td {
+            background: #fafcff;
+        }
+
+        .summary-table .price-cell {
+            font-weight: 600;
+            color: #1565c0;
+        }
+
+        .summary-table .delete-btn {
+            background: none;
+            border: none;
+            color: #e57373;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .summary-table .delete-btn:hover {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9bb5cf;
+        }
+
+        .empty-state .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* Project total */
+        .project-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+            border-radius: 12px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .project-total .label {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .project-total .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Validation error */
+        .error-msg {
+            display: none;
+            color: #d32f2f;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .error-msg.visible {
+            display: block;
+        }
+
+        .input-error {
+            border-color: #e57373 !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .faces-schematic {
+                grid-template-columns: repeat(4, 70px);
+                grid-template-rows: repeat(3, 50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Spray Painting Area & Price Calculator</h1>
+            <p>Calculate painting areas and costs for joinery elements</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- LEFT PANEL - Form -->
+            <div class="card">
+                <h2 class="card-title">Project & Element Details</h2>
+
+                <!-- Project Info -->
+                <div class="form-section">
+                    <div class="section-label">Project Info</div>
+                    <div class="form-group">
+                        <label for="projectName">Project name</label>
+                        <input type="text" id="projectName" placeholder="Enter project name">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientSite">Client / site <span style="color: #9bb5cf;">(optional)</span></label>
+                        <input type="text" id="clientSite" placeholder="Enter client or site name">
+                    </div>
+                </div>
+
+                <!-- Colour & Paint Info -->
+                <div class="form-section">
+                    <div class="section-label">Colour & Paint Info</div>
+                    <div class="form-group">
+                        <label for="colourName">Colour name</label>
+                        <input type="text" id="colourName" placeholder="e.g. Railings grey">
+                    </div>
+                    <div class="form-group">
+                        <label>Colour standard</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="colourStandard" value="RAL" checked>
+                                <span>RAL</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="colourStandard" value="Custom">
+                                <span>Custom name</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="conditional-field visible" id="ralCodeField">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="ralCode">RAL code</label>
+                            <input type="text" id="ralCode" placeholder="e.g. RAL 7016">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="paintManufacturer">Paint manufacturer</label>
+                        <input type="text" id="paintManufacturer" placeholder="e.g. F&B, Little Greene">
+                    </div>
+                    <div class="form-group">
+                        <label for="paintLocation">Paint location</label>
+                        <select id="paintLocation">
+                            <option value="internal">Internal</option>
+                            <option value="external">External</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Element Type -->
+                <div class="form-section">
+                    <div class="section-label">Element Type</div>
+                    <div class="form-group">
+                        <label for="elementType">Select element type</label>
+                        <select id="elementType">
+                            <option value="">-- Select type --</option>
+                            <option value="Flat">Flat</option>
+                            <option value="Shaker">Shaker</option>
+                            <option value="Veneer">Veneer</option>
+                            <option value="Timber">Timber</option>
+                            <option value="V-carve front (dense pattern)">V-carve front (dense pattern)</option>
+                            <option value="Door frame">Door frame</option>
+                            <option value="Sash window (3 elements)">Sash window (3 elements)</option>
+                            <option value="3D furniture panel">3D furniture panel</option>
+                        </select>
+                        <span class="error-msg" id="elementTypeError">Please select an element type</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="priceLevel">Price level</label>
+                        <select id="priceLevel">
+                            <option value="0">Level 1</option>
+                            <option value="1">Level 2</option>
+                            <option value="2">Level 3</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dimensions -->
+                <div class="form-section">
+                    <div class="section-label">Dimensions (mm)</div>
+                    <div class="dimension-row">
+                        <div class="form-group">
+                            <label for="width">Width</label>
+                            <input type="number" id="width" min="1" step="1" placeholder="mm">
+                            <span class="error-msg" id="widthError">Required</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Height</label>
+                            <input type="number" id="height" min="1" step="1" placeholder="mm">
+                            <span class="error-msg" id="heightError">Required</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="thickness">Thickness</label>
+                            <input type="number" id="thickness" min="1" step="1" placeholder="mm">
+                            <span class="error-msg" id="thicknessError">Required</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button class="btn btn-primary" id="addElementBtn">Calculate & Add to Project</button>
+                    <button class="btn btn-secondary" id="resetProjectBtn">Reset Project</button>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right-panel">
+                <!-- Visualisation -->
+                <div class="card">
+                    <h2 class="card-title">Select Faces to Spray</h2>
+                    <div class="visualisation-container">
+                        <!-- 2D Schematic layout of cube faces -->
+                        <div class="faces-schematic">
+                            <button class="face-btn face-top" data-face="top">
+                                <span class="face-icon">⬆</span>
+                                <span>Top</span>
+                            </button>
+                            <button class="face-btn face-left" data-face="left">
+                                <span class="face-icon">◀</span>
+                                <span>Left</span>
+                            </button>
+                            <button class="face-btn face-front selected" data-face="front">
+                                <span class="face-icon">◼</span>
+                                <span>Front</span>
+                            </button>
+                            <button class="face-btn face-right" data-face="right">
+                                <span class="face-icon">▶</span>
+                                <span>Right</span>
+                            </button>
+                            <button class="face-btn face-back" data-face="back">
+                                <span class="face-icon">◻</span>
+                                <span>Back</span>
+                            </button>
+                            <button class="face-btn face-bottom" data-face="bottom">
+                                <span class="face-icon">⬇</span>
+                                <span>Bottom</span>
+                            </button>
+                        </div>
+                        <p class="face-hint">Click faces to toggle spray selection</p>
+                        <span class="error-msg" id="facesError" style="text-align: center; margin-top: 8px;">Please select at least one face</span>
+
+                        <!-- Calculation Result -->
+                        <div class="calc-result">
+                            <div class="calc-row">
+                                <span class="calc-label">Selected faces:</span>
+                                <span class="calc-value" id="selectedFacesDisplay">Front</span>
+                            </div>
+                            <div class="calc-row">
+                                <span class="calc-label">Area to spray:</span>
+                                <span class="calc-value" id="areaDisplay">0.000 m²</span>
+                            </div>
+                            <div class="calc-row">
+                                <span class="calc-label">Price for this element:</span>
+                                <span class="calc-value price" id="priceDisplay">£0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Summary -->
+                <div class="card">
+                    <h2 class="card-title">Project Elements</h2>
+                    <div class="summary-table-wrapper">
+                        <table class="summary-table" id="summaryTable">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Dimensions</th>
+                                    <th>Faces</th>
+                                    <th>Area (m²)</th>
+                                    <th>Level</th>
+                                    <th>Location</th>
+                                    <th>Price</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryBody">
+                                <!-- Elements will be added here -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="emptyState">
+                            <div class="icon">📋</div>
+                            <p>No elements added yet.<br>Fill in the form and click "Calculate & Add"</p>
+                        </div>
+                    </div>
+                    <div class="project-total">
+                        <span class="label">Project Total:</span>
+                        <span class="value" id="projectTotal">£0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // =========================================================
+            // PRICE TABLE CONFIGURATION
+            // ---------------------------------------------------------
+            // Edit the prices below to change the cost per square meter.
+            // Structure: priceTable[elementType][paintLocation][priceLevelIndex]
+            // paintLocation: 'internal' or 'external'
+            // priceLevelIndex: 0 = Level 1, 1 = Level 2, 2 = Level 3
+            // All prices are in GBP (£) per square meter.
+            // =========================================================
+            const priceTable = {
+                "Flat": {
+                    internal: [25, 30, 35],      // Level 1, 2, 3 for internal
+                    external: [30, 36, 42]       // Level 1, 2, 3 for external
+                },
+                "Shaker": {
+                    internal: [32, 38, 44],
+                    external: [38, 45, 52]
+                },
+                "Veneer": {
+                    internal: [28, 34, 40],
+                    external: [34, 41, 48]
+                },
+                "Timber": {
+                    internal: [35, 42, 49],
+                    external: [42, 50, 58]
+                },
+                "V-carve front (dense pattern)": {
+                    internal: [45, 54, 63],
+                    external: [54, 65, 76]
+                },
+                "Door frame": {
+                    internal: [30, 36, 42],
+                    external: [36, 43, 50]
+                },
+                "Sash window (3 elements)": {
+                    internal: [55, 66, 77],
+                    external: [66, 79, 92]
+                },
+                "3D furniture panel": {
+                    internal: [48, 58, 68],
+                    external: [58, 70, 82]
+                }
+            };
+
+            // =========================================================
+            // FACE SELECTION STATE
+            // ---------------------------------------------------------
+            // Tracks which faces are selected for painting.
+            // Default: only 'front' is selected initially.
+            // =========================================================
+            const faces = {
+                front:  { selected: true },
+                back:   { selected: false },
+                top:    { selected: false },
+                bottom: { selected: false },
+                left:   { selected: false },
+                right:  { selected: false }
+            };
+
+            // =========================================================
+            // PROJECT DATA
+            // ---------------------------------------------------------
+            // Stores all added elements for the project summary.
+            // =========================================================
+            let projectElements = [];
+
+            // =========================================================
+            // DOM ELEMENT REFERENCES
+            // =========================================================
+            const projectNameInput = document.getElementById('projectName');
+            const clientSiteInput = document.getElementById('clientSite');
+            const colourNameInput = document.getElementById('colourName');
+            const colourStandardRadios = document.querySelectorAll('input[name="colourStandard"]');
+            const ralCodeField = document.getElementById('ralCodeField');
+            const ralCodeInput = document.getElementById('ralCode');
+            const paintManufacturerInput = document.getElementById('paintManufacturer');
+            const paintLocationSelect = document.getElementById('paintLocation');
+            const elementTypeSelect = document.getElementById('elementType');
+            const priceLevelSelect = document.getElementById('priceLevel');
+            const widthInput = document.getElementById('width');
+            const heightInput = document.getElementById('height');
+            const thicknessInput = document.getElementById('thickness');
+            const addElementBtn = document.getElementById('addElementBtn');
+            const resetProjectBtn = document.getElementById('resetProjectBtn');
+            const faceButtons = document.querySelectorAll('.face-btn');
+            const selectedFacesDisplay = document.getElementById('selectedFacesDisplay');
+            const areaDisplay = document.getElementById('areaDisplay');
+            const priceDisplay = document.getElementById('priceDisplay');
+            const summaryBody = document.getElementById('summaryBody');
+            const emptyState = document.getElementById('emptyState');
+            const projectTotalDisplay = document.getElementById('projectTotal');
+
+            // Error message elements
+            const elementTypeError = document.getElementById('elementTypeError');
+            const widthError = document.getElementById('widthError');
+            const heightError = document.getElementById('heightError');
+            const thicknessError = document.getElementById('thicknessError');
+            const facesError = document.getElementById('facesError');
+
+            // =========================================================
+            // LOCAL STORAGE KEY
+            // ---------------------------------------------------------
+            // Used to persist form values between sessions.
+            // Does NOT store dimensions or face selections.
+            // =========================================================
+            const STORAGE_KEY = 'sprayCalcLastForm';
+
+            // =========================================================
+            // LOAD SAVED FORM DATA FROM LOCAL STORAGE
+            // =========================================================
+            function loadFormFromStorage() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        if (data.projectName) projectNameInput.value = data.projectName;
+                        if (data.clientSite) clientSiteInput.value = data.clientSite;
+                        if (data.colourName) colourNameInput.value = data.colourName;
+                        if (data.colourStandard) {
+                            const radio = document.querySelector(`input[name="colourStandard"][value="${data.colourStandard}"]`);
+                            if (radio) radio.checked = true;
+                            updateRalCodeVisibility();
+                        }
+                        if (data.ralCode) ralCodeInput.value = data.ralCode;
+                        if (data.paintManufacturer) paintManufacturerInput.value = data.paintManufacturer;
+                        if (data.paintLocation) paintLocationSelect.value = data.paintLocation;
+                        if (data.elementType) elementTypeSelect.value = data.elementType;
+                        if (data.priceLevel !== undefined) priceLevelSelect.value = data.priceLevel;
+                    } catch (e) {
+                        console.warn('Failed to load saved form data:', e);
+                    }
+                }
+            }
+
+            // =========================================================
+            // SAVE FORM DATA TO LOCAL STORAGE
+            // ---------------------------------------------------------
+            // Called after each successful element addition.
+            // =========================================================
+            function saveFormToStorage() {
+                const data = {
+                    projectName: projectNameInput.value,
+                    clientSite: clientSiteInput.value,
+                    colourName: colourNameInput.value,
+                    colourStandard: document.querySelector('input[name="colourStandard"]:checked')?.value,
+                    ralCode: ralCodeInput.value,
+                    paintManufacturer: paintManufacturerInput.value,
+                    paintLocation: paintLocationSelect.value,
+                    elementType: elementTypeSelect.value,
+                    priceLevel: priceLevelSelect.value
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+
+            // =========================================================
+            // RAL CODE FIELD VISIBILITY
+            // ---------------------------------------------------------
+            // Shows/hides the RAL code input based on colour standard.
+            // =========================================================
+            function updateRalCodeVisibility() {
+                const selected = document.querySelector('input[name="colourStandard"]:checked')?.value;
+                if (selected === 'RAL') {
+                    ralCodeField.classList.add('visible');
+                } else {
+                    ralCodeField.classList.remove('visible');
+                }
+            }
+
+            // =========================================================
+            // FACE SELECTION HANDLERS
+            // ---------------------------------------------------------
+            // Toggles face selection and updates the UI.
+            // =========================================================
+            function updateFaceUI() {
+                faceButtons.forEach(btn => {
+                    const faceName = btn.dataset.face;
+                    if (faces[faceName].selected) {
+                        btn.classList.add('selected');
+                    } else {
+                        btn.classList.remove('selected');
+                    }
+                });
+
+                // Update selected faces display
+                const selectedNames = Object.keys(faces)
+                    .filter(f => faces[f].selected)
+                    .map(f => f.charAt(0).toUpperCase() + f.slice(1));
+
+                selectedFacesDisplay.textContent = selectedNames.length > 0
+                    ? selectedNames.join(', ')
+                    : 'None';
+
+                // Update calculations
+                updateCalculations();
+            }
+
+            function toggleFace(faceName) {
+                faces[faceName].selected = !faces[faceName].selected;
+                updateFaceUI();
+            }
+
+            // =========================================================
+            // AREA CALCULATION
+            // ---------------------------------------------------------
+            // Calculates the total painted area in square meters.
+            //
+            // Formula:
+            // - Convert mm to meters: divide by 1000
+            // - Front/Back area: width * height
+            // - Top/Bottom area: width * thickness
+            // - Left/Right area: height * thickness
+            // - Total = sum of all selected face areas
+            // =========================================================
+            function calculateArea() {
+                const widthMm = parseFloat(widthInput.value) || 0;
+                const heightMm = parseFloat(heightInput.value) || 0;
+                const thicknessMm = parseFloat(thicknessInput.value) || 0;
+
+                // Convert mm to meters
+                const Wm = widthMm / 1000;
+                const Hm = heightMm / 1000;
+                const Tm = thicknessMm / 1000;
+
+                // Calculate area for each face type
+                const faceAreas = {
+                    front:  Wm * Hm,
+                    back:   Wm * Hm,
+                    top:    Wm * Tm,
+                    bottom: Wm * Tm,
+                    left:   Hm * Tm,
+                    right:  Hm * Tm
+                };
+
+                // Sum selected face areas
+                let totalArea = 0;
+                for (const [faceName, faceData] of Object.entries(faces)) {
+                    if (faceData.selected) {
+                        totalArea += faceAreas[faceName];
+                    }
+                }
+
+                return totalArea;
+            }
+
+            // =========================================================
+            // PRICE CALCULATION
+            // ---------------------------------------------------------
+            // Calculates the price based on:
+            // - Element type
+            // - Paint location (internal/external)
+            // - Price level (1, 2, or 3)
+            // - Total painted area
+            //
+            // Formula: price = area (m²) × price per m²
+            // =========================================================
+            function calculatePrice(area) {
+                const elementType = elementTypeSelect.value;
+                const paintLocation = paintLocationSelect.value;
+                const priceLevelIndex = parseInt(priceLevelSelect.value);
+
+                if (!elementType || !priceTable[elementType]) {
+                    return 0;
+                }
+
+                // Lookup the price per square meter from the price table
+                const basePricePerSqm = priceTable[elementType][paintLocation][priceLevelIndex];
+
+                // Calculate total price
+                const totalPrice = area * basePricePerSqm;
+
+                return totalPrice;
+            }
+
+            // =========================================================
+            // UPDATE CALCULATION DISPLAYS
+            // =========================================================
+            function updateCalculations() {
+                const area = calculateArea();
+                const price = calculatePrice(area);
+
+                areaDisplay.textContent = area.toFixed(3) + ' m²';
+                priceDisplay.textContent = '£' + price.toFixed(2);
+            }
+
+            // =========================================================
+            // FORM VALIDATION
+            // ---------------------------------------------------------
+            // Validates required fields before adding an element.
+            // Returns true if valid, false otherwise.
+            // =========================================================
+            function validateForm() {
+                let isValid = true;
+
+                // Clear previous errors
+                elementTypeSelect.classList.remove('input-error');
+                widthInput.classList.remove('input-error');
+                heightInput.classList.remove('input-error');
+                thicknessInput.classList.remove('input-error');
+                elementTypeError.classList.remove('visible');
+                widthError.classList.remove('visible');
+                heightError.classList.remove('visible');
+                thicknessError.classList.remove('visible');
+                facesError.classList.remove('visible');
+
+                // Validate element type
+                if (!elementTypeSelect.value) {
+                    elementTypeSelect.classList.add('input-error');
+                    elementTypeError.classList.add('visible');
+                    isValid = false;
+                }
+
+                // Validate dimensions
+                const width = parseFloat(widthInput.value);
+                const height = parseFloat(heightInput.value);
+                const thickness = parseFloat(thicknessInput.value);
+
+                if (!width || width <= 0) {
+                    widthInput.classList.add('input-error');
+                    widthError.classList.add('visible');
+                    isValid = false;
+                }
+
+                if (!height || height <= 0) {
+                    heightInput.classList.add('input-error');
+                    heightError.classList.add('visible');
+                    isValid = false;
+                }
+
+                if (!thickness || thickness <= 0) {
+                    thicknessInput.classList.add('input-error');
+                    thicknessError.classList.add('visible');
+                    isValid = false;
+                }
+
+                // Validate at least one face selected
+                const hasSelectedFace = Object.values(faces).some(f => f.selected);
+                if (!hasSelectedFace) {
+                    facesError.classList.add('visible');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // =========================================================
+            // ADD ELEMENT TO PROJECT
+            // ---------------------------------------------------------
+            // Validates, calculates, and adds the element to the table.
+            // Clears dimensions and face selections after adding.
+            // =========================================================
+            function addElement() {
+                if (!validateForm()) {
+                    return;
+                }
+
+                const area = calculateArea();
+                const price = calculatePrice(area);
+
+                const element = {
+                    id: Date.now(),
+                    type: elementTypeSelect.value,
+                    width: parseFloat(widthInput.value),
+                    height: parseFloat(heightInput.value),
+                    thickness: parseFloat(thicknessInput.value),
+                    faces: Object.keys(faces).filter(f => faces[f].selected),
+                    area: area,
+                    priceLevel: parseInt(priceLevelSelect.value) + 1,
+                    paintLocation: paintLocationSelect.value,
+                    price: price
+                };
+
+                projectElements.push(element);
+
+                // Save form to localStorage (excludes dimensions & faces)
+                saveFormToStorage();
+
+                // Update UI
+                renderSummaryTable();
+                updateProjectTotal();
+
+                // Clear dimension fields for next element
+                // NOTE: Face selections are also reset to default (front only)
+                // This makes each element start fresh. Modify below if you prefer
+                // to keep the last face selection.
+                widthInput.value = '';
+                heightInput.value = '';
+                thicknessInput.value = '';
+
+                // Reset faces to default (front only selected)
+                for (const face of Object.keys(faces)) {
+                    faces[face].selected = (face === 'front');
+                }
+                updateFaceUI();
+            }
+
+            // =========================================================
+            // RENDER SUMMARY TABLE
+            // ---------------------------------------------------------
+            // Rebuilds the project elements table from the data array.
+            // =========================================================
+            function renderSummaryTable() {
+                summaryBody.innerHTML = '';
+
+                if (projectElements.length === 0) {
+                    emptyState.style.display = 'block';
+                    document.getElementById('summaryTable').style.display = 'none';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                document.getElementById('summaryTable').style.display = 'table';
+
+                projectElements.forEach((elem, index) => {
+                    const row = document.createElement('tr');
+
+                    const facesDisplay = elem.faces
+                        .map(f => f.charAt(0).toUpperCase())
+                        .join(', ');
+
+                    row.innerHTML = `
+                        <td>${elem.type}</td>
+                        <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
+                        <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
+                        <td>${elem.area.toFixed(3)}</td>
+                        <td>L${elem.priceLevel}</td>
+                        <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
+                        <td class="price-cell">£${elem.price.toFixed(2)}</td>
+                        <td><button class="delete-btn" data-id="${elem.id}" title="Remove element">✕</button></td>
+                    `;
+
+                    summaryBody.appendChild(row);
+                });
+
+                // Add delete handlers
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.dataset.id);
+                        deleteElement(id);
+                    });
+                });
+            }
+
+            // =========================================================
+            // DELETE ELEMENT
+            // ---------------------------------------------------------
+            // Removes an element from the project by ID.
+            // =========================================================
+            function deleteElement(id) {
+                projectElements = projectElements.filter(e => e.id !== id);
+                renderSummaryTable();
+                updateProjectTotal();
+            }
+
+            // =========================================================
+            // UPDATE PROJECT TOTAL
+            // ---------------------------------------------------------
+            // Calculates and displays the sum of all element prices.
+            // =========================================================
+            function updateProjectTotal() {
+                const total = projectElements.reduce((sum, elem) => sum + elem.price, 0);
+                projectTotalDisplay.textContent = '£' + total.toFixed(2);
+            }
+
+            // =========================================================
+            // RESET PROJECT
+            // ---------------------------------------------------------
+            // Clears all elements from the project.
+            // Keeps form values in localStorage.
+            // =========================================================
+            function resetProject() {
+                if (projectElements.length > 0) {
+                    if (!confirm('Are you sure you want to reset the project? All elements will be removed.')) {
+                        return;
+                    }
+                }
+                projectElements = [];
+                renderSummaryTable();
+                updateProjectTotal();
+            }
+
+            // =========================================================
+            // EVENT LISTENERS
+            // =========================================================
+
+            // Colour standard radio change
+            colourStandardRadios.forEach(radio => {
+                radio.addEventListener('change', updateRalCodeVisibility);
+            });
+
+            // Face button clicks
+            faceButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    toggleFace(this.dataset.face);
+                });
+            });
+
+            // Dimension inputs - update calculations on change
+            [widthInput, heightInput, thicknessInput].forEach(input => {
+                input.addEventListener('input', updateCalculations);
+            });
+
+            // Element type and price level changes - update calculations
+            elementTypeSelect.addEventListener('change', updateCalculations);
+            priceLevelSelect.addEventListener('change', updateCalculations);
+            paintLocationSelect.addEventListener('change', updateCalculations);
+
+            // Add element button
+            addElementBtn.addEventListener('click', addElement);
+
+            // Reset project button
+            resetProjectBtn.addEventListener('click', resetProject);
+
+            // Clear validation errors on input
+            elementTypeSelect.addEventListener('change', function() {
+                this.classList.remove('input-error');
+                elementTypeError.classList.remove('visible');
+            });
+
+            [widthInput, heightInput, thicknessInput].forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('input-error');
+                    [widthError, heightError, thicknessError][index].classList.remove('visible');
+                });
+            });
+
+            // =========================================================
+            // INITIALIZATION
+            // =========================================================
+            loadFormFromStorage();
+            updateRalCodeVisibility();
+            updateFaceUI();
+            renderSummaryTable();
+            updateProjectTotal();
+        });
+    </script>
+</body>
+</html>
