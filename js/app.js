@@ -176,17 +176,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // SVG DIAGRAM RENDERING
+    // PSEUDO-3D SVG DIAGRAM RENDERING
     // ---------------------------------------------------------
-    // Creates a proportional SVG representation of the element
-    // based on the width, height, and thickness values.
+    // Creates an isometric-looking 3D box representation of
+    // the element based on width, height, and thickness values.
     //
-    // Layout (Option A - Flat orthographic view):
-    // - Front/Back: main rectangle with aspect ratio W:H
-    // - Top: thin horizontal strip above front (height proportional to thickness)
-    // - Bottom: thin horizontal strip below front (height proportional to thickness)
-    // - Left: thin vertical strip to the left (width proportional to thickness)
-    // - Right: thin vertical strip to the right (width proportional to thickness)
+    // The box shows 3 visible faces:
+    // - Front face (main rectangle)
+    // - Top face (parallelogram slanting back)
+    // - Right face (parallelogram slanting back)
+    //
+    // Other faces (back, bottom, left) are controlled via
+    // the legend checkboxes only.
     // =========================================================
     function renderSVGDiagram() {
         // Get current dimension values (default to reasonable values if not set)
@@ -230,147 +231,144 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Calculate thickness proportions relative to dimensions
-        const thicknessToWidthRatio = T / W;
-        const thicknessToHeightRatio = T / H;
-
-        // Calculate thickness strip sizes with clamping
-        // Top/Bottom strips: height based on thickness-to-height ratio
-        let topBottomThicknessPx = frontHeightPx * thicknessToHeightRatio;
-        topBottomThicknessPx = Math.max(4, Math.min(topBottomThicknessPx, frontHeightPx * 0.25));
-
-        // Left/Right strips: width based on thickness-to-width ratio
-        let leftRightThicknessPx = frontWidthPx * thicknessToWidthRatio;
-        leftRightThicknessPx = Math.max(4, Math.min(leftRightThicknessPx, frontWidthPx * 0.25));
+        // =========================================================
+        // DEPTH CALCULATION (based on thickness)
+        // ---------------------------------------------------------
+        // The depth affects the size of the Top and Right faces.
+        // Greater thickness = deeper top/right faces.
+        // =========================================================
+        const depthFactor = T / Math.max(W, H);
+        let depthPx = frontWidthPx * depthFactor;
+        // Clamp depth to a reasonable range (10-40 pixels)
+        depthPx = Math.max(10, Math.min(depthPx, 40));
 
         // =========================================================
         // SVG LAYOUT CALCULATIONS
+        // ---------------------------------------------------------
+        // Isometric-style 3D box with:
+        // - Front face: main rectangle
+        // - Top face: parallelogram attached to top edge
+        // - Right face: parallelogram attached to right edge
         // =========================================================
 
         // Padding around the diagram
-        const padding = 20;
+        const padding = 25;
 
-        // Total SVG dimensions
-        const svgWidth = leftRightThicknessPx + frontWidthPx + leftRightThicknessPx + 2 * padding;
-        const svgHeight = topBottomThicknessPx + frontHeightPx + topBottomThicknessPx + 2 * padding;
+        // Total SVG dimensions (account for depth offset)
+        const svgWidth = frontWidthPx + depthPx + 2 * padding;
+        const svgHeight = frontHeightPx + depthPx + 2 * padding;
 
-        // Position calculations for each face
-        // Left strip
-        const leftX = padding;
-        const leftY = padding + topBottomThicknessPx;
-        const leftWidth = leftRightThicknessPx;
-        const leftHeight = frontHeightPx;
+        // Front face corners (bottom-left origin for the 3D effect)
+        const frontX = padding;
+        const frontY = padding + depthPx;
 
-        // Front rectangle
-        const frontX = padding + leftRightThicknessPx;
-        const frontY = padding + topBottomThicknessPx;
-        const frontWidth = frontWidthPx;
-        const frontHeight = frontHeightPx;
+        // Calculate polygon points for each face
+        // Front face (rectangle)
+        const frontPoints = [
+            [frontX, frontY],
+            [frontX + frontWidthPx, frontY],
+            [frontX + frontWidthPx, frontY + frontHeightPx],
+            [frontX, frontY + frontHeightPx]
+        ];
 
-        // Right strip
-        const rightX = padding + leftRightThicknessPx + frontWidthPx;
-        const rightY = padding + topBottomThicknessPx;
-        const rightWidth = leftRightThicknessPx;
-        const rightHeight = frontHeightPx;
+        // Top face (parallelogram - slants back and to the right)
+        const topPoints = [
+            [frontX, frontY],
+            [frontX + depthPx, frontY - depthPx],
+            [frontX + frontWidthPx + depthPx, frontY - depthPx],
+            [frontX + frontWidthPx, frontY]
+        ];
 
-        // Top strip
-        const topX = padding + leftRightThicknessPx;
-        const topY = padding;
-        const topWidth = frontWidthPx;
-        const topHeight = topBottomThicknessPx;
+        // Right face (parallelogram - slants back and up)
+        const rightPoints = [
+            [frontX + frontWidthPx, frontY],
+            [frontX + frontWidthPx + depthPx, frontY - depthPx],
+            [frontX + frontWidthPx + depthPx, frontY + frontHeightPx - depthPx],
+            [frontX + frontWidthPx, frontY + frontHeightPx]
+        ];
 
-        // Bottom strip
-        const bottomX = padding + leftRightThicknessPx;
-        const bottomY = padding + topBottomThicknessPx + frontHeightPx;
-        const bottomWidth = frontWidthPx;
-        const bottomHeight = topBottomThicknessPx;
+        // Helper function to convert points array to SVG polygon points string
+        function pointsToString(points) {
+            return points.map(p => p.join(',')).join(' ');
+        }
 
-        // Back face (shown as dashed outline offset behind front)
-        const backOffset = 6;
-        const backX = frontX + backOffset;
-        const backY = frontY - backOffset;
-        const backWidth = frontWidthPx;
-        const backHeight = frontHeightPx;
+        // Calculate centroids for label positioning
+        function getCentroid(points) {
+            const n = points.length;
+            let cx = 0, cy = 0;
+            points.forEach(p => { cx += p[0]; cy += p[1]; });
+            return [cx / n, cy / n];
+        }
 
-        // Determine if labels should be shown based on strip size
-        const showTopBottomLabel = topBottomThicknessPx >= 12;
-        const showLeftRightLabel = leftRightThicknessPx >= 12;
+        const frontCenter = getCentroid(frontPoints);
+        const topCenter = getCentroid(topPoints);
+        const rightCenter = getCentroid(rightPoints);
 
         // =========================================================
         // BUILD SVG CONTENT
         // =========================================================
-        let svgContent = `
+        const svgContent = `
         <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
              xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <!-- Gradient for selected faces -->
-                <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <!-- Gradient for selected front face -->
+                <linearGradient id="frontSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" style="stop-color:#8FBC5A"/>
                     <stop offset="100%" style="stop-color:#6B8E23"/>
                 </linearGradient>
+                <!-- Gradient for selected top face (lighter) -->
+                <linearGradient id="topSelectedGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#A8D468"/>
+                    <stop offset="100%" style="stop-color:#8FBC5A"/>
+                </linearGradient>
+                <!-- Gradient for selected right face (medium) -->
+                <linearGradient id="rightSelectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#7AA53E"/>
+                    <stop offset="100%" style="stop-color:#556B2F"/>
+                </linearGradient>
             </defs>
 
-            <!-- Back face (dashed outline behind front for depth) -->
-            <g class="svg-face svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
-                <rect class="svg-face-fill"
-                      x="${backX}" y="${backY}"
-                      width="${backWidth}" height="${backHeight}" rx="3"/>
-                <text class="svg-face-label"
-                      x="${backX + backWidth/2}" y="${backY + backHeight/2}">Back</text>
+            <!-- Back edges (dashed lines to show hidden edges) -->
+            <line class="edge-line"
+                  x1="${frontX + depthPx}" y1="${frontY - depthPx + frontHeightPx}"
+                  x2="${frontX + depthPx}" y2="${frontY - depthPx}"
+                  stroke-dasharray="4 3" opacity="0.4"/>
+            <line class="edge-line"
+                  x1="${frontX}" y1="${frontY + frontHeightPx}"
+                  x2="${frontX + depthPx}" y2="${frontY - depthPx + frontHeightPx}"
+                  stroke-dasharray="4 3" opacity="0.4"/>
+
+            <!-- Top face (parallelogram - draw first so it's behind) -->
+            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
+                <polygon class="face-polygon" points="${pointsToString(topPoints)}"/>
+                <text class="face-label-text" x="${topCenter[0]}" y="${topCenter[1]}">Top</text>
             </g>
 
-            <!-- Top strip (horizontal, above front) -->
-            <g class="svg-face svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
-                <rect class="svg-face-fill"
-                      x="${topX}" y="${topY}"
-                      width="${topWidth}" height="${topHeight}" rx="2"/>
-                ${showTopBottomLabel ? `<text class="svg-face-label"
-                      x="${topX + topWidth/2}" y="${topY + topHeight/2}">Top</text>` : ''}
-            </g>
-
-            <!-- Bottom strip (horizontal, below front) -->
-            <g class="svg-face svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom">
-                <rect class="svg-face-fill"
-                      x="${bottomX}" y="${bottomY}"
-                      width="${bottomWidth}" height="${bottomHeight}" rx="2"/>
-                ${showTopBottomLabel ? `<text class="svg-face-label"
-                      x="${bottomX + bottomWidth/2}" y="${bottomY + bottomHeight/2}">Bottom</text>` : ''}
-            </g>
-
-            <!-- Left strip (vertical, to the left of front) -->
-            <g class="svg-face svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left">
-                <rect class="svg-face-fill"
-                      x="${leftX}" y="${leftY}"
-                      width="${leftWidth}" height="${leftHeight}" rx="2"/>
-                ${showLeftRightLabel ? `<text class="svg-face-label"
-                      x="${leftX + leftWidth/2}" y="${leftY + leftHeight/2}"
-                      transform="rotate(-90, ${leftX + leftWidth/2}, ${leftY + leftHeight/2})">Left</text>` : ''}
-            </g>
-
-            <!-- Right strip (vertical, to the right of front) -->
-            <g class="svg-face svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
-                <rect class="svg-face-fill"
-                      x="${rightX}" y="${rightY}"
-                      width="${rightWidth}" height="${rightHeight}" rx="2"/>
-                ${showLeftRightLabel ? `<text class="svg-face-label"
-                      x="${rightX + rightWidth/2}" y="${rightY + rightHeight/2}"
-                      transform="rotate(90, ${rightX + rightWidth/2}, ${rightY + rightHeight/2})">Right</text>` : ''}
+            <!-- Right face (parallelogram) -->
+            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
+                <polygon class="face-polygon" points="${pointsToString(rightPoints)}"/>
+                <text class="face-label-text" x="${rightCenter[0]}" y="${rightCenter[1]}">Right</text>
             </g>
 
             <!-- Front face (main rectangle - drawn last to be on top) -->
-            <g class="svg-face svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
-                <rect class="svg-face-fill"
-                      x="${frontX}" y="${frontY}"
-                      width="${frontWidth}" height="${frontHeight}" rx="3"/>
-                <text class="svg-face-label"
-                      x="${frontX + frontWidth/2}" y="${frontY + frontHeight/2}">Front</text>
+            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
+                <polygon class="face-polygon" points="${pointsToString(frontPoints)}"/>
+                <text class="face-label-text" x="${frontCenter[0]}" y="${frontCenter[1]}">Front</text>
             </g>
+
+            <!-- 3D edge highlights (dark lines at corners for depth) -->
+            <line class="edge-line-dark"
+                  x1="${frontX + frontWidthPx}" y1="${frontY}"
+                  x2="${frontX + frontWidthPx + depthPx}" y2="${frontY - depthPx}"/>
+            <line class="edge-line-dark"
+                  x1="${frontX}" y1="${frontY}"
+                  x2="${frontX + depthPx}" y2="${frontY - depthPx}"/>
         </svg>`;
 
         svgDiagramWrapper.innerHTML = svgContent;
 
-        // Add click handlers to SVG faces
-        const svgFaces = svgDiagramWrapper.querySelectorAll('.svg-face');
+        // Add click handlers to the 3 visible SVG faces (front, top, right)
+        const svgFaces = svgDiagramWrapper.querySelectorAll('.svg-face-3d');
         svgFaces.forEach(face => {
             face.addEventListener('click', function() {
                 toggleFace(this.dataset.face);
