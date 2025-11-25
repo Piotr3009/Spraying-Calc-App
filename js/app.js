@@ -1,18 +1,22 @@
 // js/app.js
 // =========================================================
-// SPRAY PAINTING AREA & PRICE CALCULATOR - SHAKER EDITION
+// SPRAY PAINTING AREA & PRICE CALCULATOR - Main Application
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // PRICE TABLE CONFIGURATION
     // ---------------------------------------------------------
-    // Zachowana oryginalna tabela cen
+    // Edit the prices below to change the cost per square meter.
+    // Structure: priceTable[elementType][paintLocation][priceLevelIndex]
+    // paintLocation: 'internal' or 'external'
+    // priceLevelIndex: 0 = Level 1, 1 = Level 2, 2 = Level 3
+    // All prices are in GBP (£) per square meter.
     // =========================================================
     const priceTable = {
         "Flat": {
-            internal: [25, 30, 35],
-            external: [30, 36, 42]
+            internal: [25, 30, 35],      // Level 1, 2, 3 for internal
+            external: [30, 36, 42]       // Level 1, 2, 3 for external
         },
         "Shaker": {
             internal: [32, 38, 44],
@@ -46,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // FACE SELECTION STATE
+    // ---------------------------------------------------------
+    // Tracks which faces are selected for painting.
+    // Default: only 'front' is selected initially.
     // =========================================================
     const faces = {
         front:  { selected: true },
@@ -58,6 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // PROJECT DATA
+    // ---------------------------------------------------------
+    // Stores all added elements for the project summary.
     // =========================================================
     let projectElements = [];
 
@@ -77,15 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const widthInput = document.getElementById('width');
     const heightInput = document.getElementById('height');
     const thicknessInput = document.getElementById('thickness');
-    
-    // Buttons
     const addElementBtn = document.getElementById('addElementBtn');
     const resetProjectBtn = document.getElementById('resetProjectBtn');
-    
-    // Display & Legend
     const legendItems = document.querySelectorAll('.legend-item');
-    // Note: In new HTML checkboxes are hidden but we still might reference them logic-wise if needed,
-    // but here we will rely on clicking the items directly.
+    const legendCheckboxes = document.querySelectorAll('.legend-checkbox');
     const selectedFacesDisplay = document.getElementById('selectedFacesDisplay');
     const areaDisplay = document.getElementById('areaDisplay');
     const priceDisplay = document.getElementById('priceDisplay');
@@ -105,11 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // LOCAL STORAGE KEY
+    // ---------------------------------------------------------
+    // Used to persist form values between sessions.
+    // Does NOT store dimensions or face selections.
     // =========================================================
     const STORAGE_KEY = 'sprayCalcLastForm';
 
     // =========================================================
-    // LOAD SAVED FORM DATA
+    // LOAD SAVED FORM DATA FROM LOCAL STORAGE
     // =========================================================
     function loadFormFromStorage() {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -136,7 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // SAVE FORM DATA
+    // SAVE FORM DATA TO LOCAL STORAGE
+    // ---------------------------------------------------------
+    // Called after each successful element addition.
     // =========================================================
     function saveFormToStorage() {
         const data = {
@@ -154,7 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // RAL CODE VISIBILITY
+    // RAL CODE FIELD VISIBILITY
+    // ---------------------------------------------------------
+    // Shows/hides the RAL code input based on colour standard.
     // =========================================================
     function updateRalCodeVisibility() {
         const selected = document.querySelector('input[name="colourStandard"]:checked')?.value;
@@ -166,116 +177,248 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // NEW SHAKER SVG DIAGRAM RENDERING
+    // PSEUDO-3D SVG DIAGRAM RENDERING
     // ---------------------------------------------------------
-    // Renders a pseudo-3D door with Shaker panel details
+    // Creates an isometric-looking 3D box representation of
+    // the element based on width, height, and thickness values.
+    //
+    // The box shows 3 visible faces:
+    // - Front face (main rectangle)
+    // - Top face (parallelogram slanting back)
+    // - Right face (parallelogram slanting back)
+    //
+    // Other faces (back, bottom, left) are controlled via
+    // the legend checkboxes only.
     // =========================================================
     function renderSVGDiagram() {
-        // Get dimensions (defaults if empty)
-        const W = parseFloat(widthInput.value) || 500;
-        const H = parseFloat(heightInput.value) || 700;
-        const T = parseFloat(thicknessInput.value) || 22;
+        // Get current dimension values (default to reasonable values if not set)
+        const W = parseFloat(widthInput.value) || 600;
+        const H = parseFloat(heightInput.value) || 400;
+        const T = parseFloat(thicknessInput.value) || 18;
 
-        // Update dimension text (hidden in new layout usually, but kept for logic safety)
-        if(dimensionDisplayDims) {
-            const wDisplay = widthInput.value || '-';
-            const hDisplay = heightInput.value || '-';
-            const tDisplay = thicknessInput.value || '-';
-            dimensionDisplayDims.textContent = `W: ${wDisplay}, H: ${hDisplay}, T: ${tDisplay}`;
+        // Update dimension display
+        const wDisplay = widthInput.value || '-';
+        const hDisplay = heightInput.value || '-';
+        const tDisplay = thicknessInput.value || '-';
+        dimensionDisplayDims.textContent = `Width: ${wDisplay} mm, Height: ${hDisplay} mm, Thickness: ${tDisplay} mm`;
+
+        // =========================================================
+        // PROPORTIONAL SIZING CALCULATIONS
+        // =========================================================
+
+        // Maximum dimensions for the front rectangle in pixels
+        const maxFrontWidth = 200;
+        const maxFrontHeight = 150;
+
+        // Calculate front rectangle size maintaining aspect ratio
+        const widthToHeightRatio = W / H;
+        let frontWidthPx, frontHeightPx;
+
+        if (widthToHeightRatio >= 1) {
+            frontWidthPx = maxFrontWidth;
+            frontHeightPx = maxFrontWidth / widthToHeightRatio;
+            if (frontHeightPx > maxFrontHeight) {
+                frontHeightPx = maxFrontHeight;
+                frontWidthPx = maxFrontHeight * widthToHeightRatio;
+            }
+        } else {
+            frontHeightPx = maxFrontHeight;
+            frontWidthPx = maxFrontHeight * widthToHeightRatio;
+            if (frontWidthPx > maxFrontWidth) {
+                frontWidthPx = maxFrontWidth;
+                frontHeightPx = maxFrontWidth / widthToHeightRatio;
+            }
         }
 
-        // --- SCALING LOGIC ---
-        // We fit the door into a fixed SVG viewbox of roughly 300x300
-        const MAX_SVG_DIM = 260; 
-        const maxInputDim = Math.max(W, H);
-        const scale = MAX_SVG_DIM / maxInputDim;
+        // Depth calculation
+        const depthFactor = T / Math.max(W, H);
+        let depthPx = frontWidthPx * depthFactor;
+        depthPx = Math.max(12, Math.min(depthPx, 35));
 
-        const wPx = W * scale;
-        const hPx = H * scale;
-        
-        // Depth simulation (clamped so it doesn't look like a tunnel for thick items)
-        // We make thickness proportional but capped visually
-        const depthFactor = Math.min((T / maxInputDim) * 100, 40); 
-        const depthPx = Math.max(8, depthFactor);
+        // Padding and layout
+        const padding = 30;
+        const barGap = 15; // Gap between main model and side bars
+        const barThickness = 20; // Thickness of bottom/left bars
 
-        // Shaker Frame Size calculation
-        // Usually frame is ~15-20% of width, but minimum 15px visually
-        const frameSizePx = Math.max(12, Math.min(wPx, hPx) * 0.15);
+        // Calculate positions
+        const mainModelX = padding + barThickness + barGap;
+        const mainModelY = padding + depthPx;
 
-        // Offsets to center inside SVG
-        const padX = 20;
-        const padY = 20 + depthPx; // Push down to make room for top face
+        // Front face (main rectangle)
+        const frontPoints = [
+            [mainModelX, mainModelY],
+            [mainModelX + frontWidthPx, mainModelY],
+            [mainModelX + frontWidthPx, mainModelY + frontHeightPx],
+            [mainModelX, mainModelY + frontHeightPx]
+        ];
 
-        // --- COORDINATES CALCULATION ---
+        // Top face
+        const topPoints = [
+            [mainModelX, mainModelY],
+            [mainModelX + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx, mainModelY]
+        ];
 
-        // Front Face (Main Rectangle)
-        const fTL = [padX, padY];                   // Front-Top-Left
-        const fTR = [padX + wPx, padY];             // Front-Top-Right
-        const fBR = [padX + wPx, padY + hPx];       // Front-Bottom-Right
-        const fBL = [padX, padY + hPx];             // Front-Bottom-Left
+        // Right face
+        const rightPoints = [
+            [mainModelX + frontWidthPx, mainModelY],
+            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx + depthPx, mainModelY + frontHeightPx - depthPx],
+            [mainModelX + frontWidthPx, mainModelY + frontHeightPx]
+        ];
 
-        // Back Face (Hidden/Dashed - offset up and right)
-        const bTL = [padX + depthPx, padY - depthPx];
-        const bTR = [padX + wPx + depthPx, padY - depthPx];
-        const bBR = [padX + wPx + depthPx, padY + hPx - depthPx];
-        // bBL not needed for visible drawing usually
+        // Back face (hidden behind, shown with dashed outline and arrow)
+        const backX = mainModelX + depthPx;
+        const backY = mainModelY - depthPx;
+        const backPoints = [
+            [backX, backY],
+            [backX + frontWidthPx, backY],
+            [backX + frontWidthPx, backY + frontHeightPx],
+            [backX, backY + frontHeightPx]
+        ];
 
-        // Shaker Inner Panel (Recess)
-        const iTL = [fTL[0] + frameSizePx, fTL[1] + frameSizePx];
-        const iTR = [fTR[0] - frameSizePx, fTR[1] + frameSizePx];
-        const iBR = [fBR[0] - frameSizePx, fBR[1] - frameSizePx];
-        const iBL = [fBL[0] + frameSizePx, fBL[1] - frameSizePx];
+        // Bottom bar (horizontal bar below main model)
+        const bottomBarY = mainModelY + frontHeightPx + barGap;
+        const bottomBarPoints = [
+            [mainModelX, bottomBarY],
+            [mainModelX + frontWidthPx, bottomBarY],
+            [mainModelX + frontWidthPx, bottomBarY + barThickness],
+            [mainModelX, bottomBarY + barThickness]
+        ];
 
-        // Helpers
-        const pts = (arr) => arr.map(p => p.join(',')).join(' ');
+        // Left bar (vertical bar to the left of main model)
+        const leftBarX = padding;
+        const leftBarPoints = [
+            [leftBarX, mainModelY],
+            [leftBarX + barThickness, mainModelY],
+            [leftBarX + barThickness, mainModelY + frontHeightPx],
+            [leftBarX, mainModelY + frontHeightPx]
+        ];
 
-        // --- SVG CONSTRUCTION ---
-        // Uses classes defined in updated CSS: .shaker-frame, .shaker-panel, .shaker-bevel
-        
-        const svgWidth = wPx + depthPx + 50;
-        const svgHeight = hPx + depthPx + 50;
+        // Helper functions
+        function pointsToString(points) {
+            return points.map(p => p.join(',')).join(' ');
+        }
 
+        function getCentroid(points) {
+            const n = points.length;
+            let cx = 0, cy = 0;
+            points.forEach(p => { cx += p[0]; cy += p[1]; });
+            return [cx / n, cy / n];
+        }
+
+        const frontCenter = getCentroid(frontPoints);
+        const topCenter = getCentroid(topPoints);
+        const rightCenter = getCentroid(rightPoints);
+        const backCenter = getCentroid(backPoints);
+        const bottomCenter = getCentroid(bottomBarPoints);
+        const leftCenter = getCentroid(leftBarPoints);
+
+        // Calculate total SVG dimensions
+        const svgWidth = mainModelX + frontWidthPx + depthPx + padding;
+        const svgHeight = bottomBarY + barThickness + padding + 30; // Extra space for label
+
+        // Arrow from back to main model
+        const arrowStartX = backCenter[0];
+        const arrowStartY = backCenter[1];
+        const arrowEndX = frontCenter[0];
+        const arrowEndY = frontCenter[1];
+
+        // =========================================================
+        // BUILD SVG CONTENT
+        // =========================================================
         const svgContent = `
-        <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">
-            
+        <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
+             xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3a4038" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#2f352e" stop-opacity="0.98"/>
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#a8b5a0" />
+                </marker>
+            </defs>
+
+            <!-- Background panel -->
+            <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" rx="18" class="scene-backdrop" fill="url(#panelGradient)" />
+            <rect x="12" y="12" width="${svgWidth - 24}" height="${svgHeight - 24}" rx="14" class="scene-grid" />
+
+            <!-- Back face (dashed outline) -->
             <g class="svg-face-3d svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
-                <polygon class="face-polygon" points="${pts([bTL, bTR, bBR, [bTL[0], bBR[1]]])}"/>
+                <polygon class="face-polygon" points="${pointsToString(backPoints)}" 
+                         stroke-dasharray="5 3" fill-opacity="0.3"/>
+                <text class="face-label-text" x="${backCenter[0]}" y="${backCenter[1]}" fill="#a8b5a0" opacity="0.7">Back</text>
             </g>
 
-            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
-                <polygon class="face-polygon" points="${pts([fTL, bTL, bTR, fTR])}"/>
+            <!-- Arrow from back to model -->
+            <line x1="${arrowStartX}" y1="${arrowStartY}" 
+                  x2="${arrowEndX}" y2="${arrowEndY}" 
+                  stroke="#a8b5a0" stroke-width="1.5" 
+                  stroke-dasharray="3 2" opacity="0.6"
+                  marker-end="url(#arrowhead)"/>
+
+            <!-- Top face -->
+            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top" filter="url(#glow)">
+                <polygon class="face-polygon" points="${pointsToString(topPoints)}"/>
+                <text class="face-label-text" x="${topCenter[0]}" y="${topCenter[1]}">Top</text>
             </g>
 
-            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
-                <polygon class="face-polygon" points="${pts([fTR, bTR, bBR, fBR])}"/>
+            <!-- Right face -->
+            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right" filter="url(#glow)">
+                <polygon class="face-polygon" points="${pointsToString(rightPoints)}"/>
+                <text class="face-label-text" x="${rightCenter[0]}" y="${rightCenter[1]}">Right</text>
             </g>
 
-            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
-                
-                <path class="shaker-frame shaker-edge" d="
-                    M ${pts([fTL])} L ${pts([fTR])} L ${pts([fBR])} L ${pts([fBL])} Z
-                    M ${pts([iTL])} L ${pts([iBL])} L ${pts([iBR])} L ${pts([iTR])} Z
-                " fill-rule="evenodd" />
-
-                <polygon class="shaker-panel shaker-edge" points="${pts([iTL, iTR, iBR, iBL])}" />
-
-                <line x1="${fTL[0]}" y1="${fTL[1]}" x2="${iTL[0]}" y2="${iTL[1]}" class="shaker-bevel" stroke-width="1" />
-                <line x1="${fTR[0]}" y1="${fTR[1]}" x2="${iTR[0]}" y2="${iTR[1]}" class="shaker-bevel" stroke-width="1" />
-                <line x1="${fBR[0]}" y1="${fBR[1]}" x2="${iBR[0]}" y2="${iBR[1]}" class="shaker-bevel" stroke-width="1" />
-                <line x1="${fBL[0]}" y1="${fBL[1]}" x2="${iBL[0]}" y2="${iBL[1]}" class="shaker-bevel" stroke-width="1" />
-
-                <text class="face-label-text" x="${fTL[0] + wPx/2}" y="${fTL[1] + hPx/2}" dominant-baseline="middle" text-anchor="middle">Front</text>
+            <!-- Front face -->
+            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front" filter="url(#glow)">
+                <polygon class="face-polygon" points="${pointsToString(frontPoints)}"/>
+                <text class="face-label-text" x="${frontCenter[0]}" y="${frontCenter[1]}">Front</text>
             </g>
 
-            <text class="face-label-text" x="${(fTL[0]+bTL[0])/2}" y="${(fTL[1]+bTL[1])/2 - 5}" text-anchor="middle">Top</text>
-            <text class="face-label-text" x="${(fTR[0]+bTR[0])/2 + 10}" y="${(fTR[1]+bBR[1])/2}" text-anchor="start">Right</text>
+            <!-- Bottom bar -->
+            <g class="svg-face-3d svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom" filter="url(#glow)">
+                <rect class="face-polygon" x="${bottomBarPoints[0][0]}" y="${bottomBarPoints[0][1]}" 
+                      width="${frontWidthPx}" height="${barThickness}" rx="3"/>
+                <text class="face-label-text" x="${bottomCenter[0]}" y="${bottomCenter[1]}">Bottom</text>
+            </g>
 
+            <!-- Left bar -->
+            <g class="svg-face-3d svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left" filter="url(#glow)">
+                <rect class="face-polygon" x="${leftBarPoints[0][0]}" y="${leftBarPoints[0][1]}" 
+                      width="${barThickness}" height="${frontHeightPx}" rx="3"/>
+                <text class="face-label-text" x="${leftCenter[0]}" y="${leftCenter[1]}" 
+                      transform="rotate(-90 ${leftCenter[0]} ${leftCenter[1]})">Left</text>
+            </g>
+
+            <!-- 3D edge highlights -->
+            <line class="edge-line-dark"
+                  x1="${mainModelX + frontWidthPx}" y1="${mainModelY}"
+                  x2="${mainModelX + frontWidthPx + depthPx}" y2="${mainModelY - depthPx}"/>
+            <line class="edge-line-dark"
+                  x1="${mainModelX}" y1="${mainModelY}"
+                  x2="${mainModelX + depthPx}" y2="${mainModelY - depthPx}"/>
+
+            <!-- Label under model -->
+            <text x="${svgWidth / 2}" y="${svgHeight - 10}" 
+                  fill="#a8b5a0" font-size="11" text-anchor="middle" font-weight="600">
+                ${wDisplay} × ${hDisplay} × ${tDisplay} mm
+            </text>
         </svg>`;
 
         svgDiagramWrapper.innerHTML = svgContent;
 
-        // Add click listeners to new SVG nodes
-        svgDiagramWrapper.querySelectorAll('.svg-face-3d').forEach(face => {
+        // Add click handlers to all faces
+        const svgFaces = svgDiagramWrapper.querySelectorAll('.svg-face-3d');
+        svgFaces.forEach(face => {
             face.addEventListener('click', function() {
                 toggleFace(this.dataset.face);
             });
@@ -283,13 +426,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // UI UPDATES
+    // FACE SELECTION HANDLERS
+    // ---------------------------------------------------------
+    // Toggles face selection and updates the UI.
     // =========================================================
     function updateFaceUI() {
-        // Re-render SVG to show selection states
+        // Re-render SVG diagram with current selection state
         renderSVGDiagram();
 
-        // Update Legend Chips
+        // Update legend items and checkboxes
         legendItems.forEach(item => {
             const faceName = item.dataset.face;
             if (faces[faceName].selected) {
@@ -299,7 +444,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Update Text Summary
+        legendCheckboxes.forEach(checkbox => {
+            const faceName = checkbox.dataset.face;
+            checkbox.checked = faces[faceName].selected;
+        });
+
+        // Update selected faces display
         const selectedNames = Object.keys(faces)
             .filter(f => faces[f].selected)
             .map(f => f.charAt(0).toUpperCase() + f.slice(1));
@@ -308,29 +458,38 @@ document.addEventListener('DOMContentLoaded', function() {
             ? selectedNames.join(', ')
             : 'None';
 
+        // Update calculations
         updateCalculations();
     }
 
     function toggleFace(faceName) {
-        if (faces[faceName]) {
-            faces[faceName].selected = !faces[faceName].selected;
-            updateFaceUI();
-        }
+        faces[faceName].selected = !faces[faceName].selected;
+        updateFaceUI();
     }
 
     // =========================================================
-    // CALCULATIONS
+    // AREA CALCULATION
+    // ---------------------------------------------------------
+    // Calculates the total painted area in square meters.
+    //
+    // Formula:
+    // - Convert mm to meters: divide by 1000
+    // - Front/Back area: width * height
+    // - Top/Bottom area: width * thickness
+    // - Left/Right area: height * thickness
+    // - Total = sum of all selected face areas
     // =========================================================
     function calculateArea() {
         const widthMm = parseFloat(widthInput.value) || 0;
         const heightMm = parseFloat(heightInput.value) || 0;
         const thicknessMm = parseFloat(thicknessInput.value) || 0;
 
-        // Convert to meters
+        // Convert mm to meters
         const Wm = widthMm / 1000;
         const Hm = heightMm / 1000;
         const Tm = thicknessMm / 1000;
 
+        // Calculate area for each face type
         const faceAreas = {
             front:  Wm * Hm,
             back:   Wm * Hm,
@@ -340,23 +499,44 @@ document.addEventListener('DOMContentLoaded', function() {
             right:  Hm * Tm
         };
 
+        // Sum selected face areas
         let totalArea = 0;
         for (const [faceName, faceData] of Object.entries(faces)) {
             if (faceData.selected) {
                 totalArea += faceAreas[faceName];
             }
         }
+
         return totalArea;
     }
 
+    // =========================================================
+    // PRICE CALCULATION
+    // ---------------------------------------------------------
+    // Calculates the price based on:
+    // - Element type
+    // - Paint location (internal/external)
+    // - Price level (1, 2, or 3)
+    // - Total painted area
+    //
+    // Formula: price = area (m²) × price per m²
+    // =========================================================
     function calculatePrice(area) {
         const pricePerM2 = parseFloat(pricePerM2Input.value);
+
         if (!pricePerM2 || pricePerM2 <= 0) {
             return 0;
         }
-        return area * pricePerM2;
+
+        // Calculate total price
+        const totalPrice = area * pricePerM2;
+
+        return totalPrice;
     }
 
+    // =========================================================
+    // UPDATE CALCULATION DISPLAYS
+    // =========================================================
     function updateCalculations() {
         const area = calculateArea();
         const price = calculatePrice(area);
@@ -366,41 +546,66 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // VALIDATION
+    // FORM VALIDATION
+    // ---------------------------------------------------------
+    // Validates required fields before adding an element.
+    // Returns true if valid, false otherwise.
     // =========================================================
     function validateForm() {
         let isValid = true;
 
-        // Reset errors
-        [elementTypeSelect, widthInput, heightInput, thicknessInput, pricePerM2Input].forEach(el => el.classList.remove('input-error'));
-        [elementTypeError, widthError, heightError, thicknessError, pricePerM2Error, facesError].forEach(el => el.classList.remove('visible'));
+        // Clear previous errors
+        elementTypeSelect.classList.remove('input-error');
+        widthInput.classList.remove('input-error');
+        heightInput.classList.remove('input-error');
+        thicknessInput.classList.remove('input-error');
+        pricePerM2Input.classList.remove('input-error');
+        elementTypeError.classList.remove('visible');
+        widthError.classList.remove('visible');
+        heightError.classList.remove('visible');
+        thicknessError.classList.remove('visible');
+        facesError.classList.remove('visible');
+        pricePerM2Error.classList.remove('visible');
 
+        // Validate element type
         if (!elementTypeSelect.value) {
             elementTypeSelect.classList.add('input-error');
             elementTypeError.classList.add('visible');
             isValid = false;
         }
-        if (!parseFloat(pricePerM2Input.value) || parseFloat(pricePerM2Input.value) <= 0) {
+
+        // Validate price per m²
+        const pricePerM2 = parseFloat(pricePerM2Input.value);
+        if (!pricePerM2 || pricePerM2 <= 0) {
             pricePerM2Input.classList.add('input-error');
             pricePerM2Error.classList.add('visible');
             isValid = false;
         }
-        if (!parseFloat(widthInput.value)) {
+
+        // Validate dimensions
+        const width = parseFloat(widthInput.value);
+        const height = parseFloat(heightInput.value);
+        const thickness = parseFloat(thicknessInput.value);
+
+        if (!width || width <= 0) {
             widthInput.classList.add('input-error');
             widthError.classList.add('visible');
             isValid = false;
         }
-        if (!parseFloat(heightInput.value)) {
+
+        if (!height || height <= 0) {
             heightInput.classList.add('input-error');
             heightError.classList.add('visible');
             isValid = false;
         }
-        if (!parseFloat(thicknessInput.value)) {
+
+        if (!thickness || thickness <= 0) {
             thicknessInput.classList.add('input-error');
             thicknessError.classList.add('visible');
             isValid = false;
         }
 
+        // Validate at least one face selected
         const hasSelectedFace = Object.values(faces).some(f => f.selected);
         if (!hasSelectedFace) {
             facesError.classList.add('visible');
@@ -411,17 +616,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // ADD / DELETE / RESET Logic
+    // ADD ELEMENT TO PROJECT
+    // ---------------------------------------------------------
+    // Validates, calculates, and adds the element to the table.
+    // Clears dimensions and face selections after adding.
     // =========================================================
     function addElement() {
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         const area = calculateArea();
         const price = calculatePrice(area);
 
         const element = {
             id: Date.now(),
-            type: elementTypeSelect.options[elementTypeSelect.selectedIndex].text, // Get text label
+            type: elementTypeSelect.value,
             width: parseFloat(widthInput.value),
             height: parseFloat(heightInput.value),
             thickness: parseFloat(thicknessInput.value),
@@ -433,72 +643,107 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         projectElements.push(element);
+
+        // Save form to localStorage (excludes dimensions & faces)
         saveFormToStorage();
+
+        // Update UI
         renderSummaryTable();
         updateProjectTotal();
 
-        // Reset inputs for next element
+        // Clear dimension fields for next element
+        // NOTE: Face selections are also reset to default (front only)
+        // This makes each element start fresh. Modify below if you prefer
+        // to keep the last face selection.
         widthInput.value = '';
         heightInput.value = '';
         thicknessInput.value = '';
-        
-        // Reset faces to default
-        Object.keys(faces).forEach(k => faces[k].selected = (k === 'front'));
+
+        // Reset faces to default (front only selected)
+        for (const face of Object.keys(faces)) {
+            faces[face].selected = (face === 'front');
+        }
         updateFaceUI();
     }
 
+    // =========================================================
+    // RENDER SUMMARY TABLE
+    // ---------------------------------------------------------
+    // Rebuilds the project elements table from the data array.
+    // =========================================================
     function renderSummaryTable() {
         summaryBody.innerHTML = '';
-        
+
         if (projectElements.length === 0) {
             emptyState.style.display = 'block';
-            document.getElementById('summaryTable').style.display = 'none'; // Optional based on CSS
+            document.getElementById('summaryTable').style.display = 'none';
             return;
         }
 
         emptyState.style.display = 'none';
         document.getElementById('summaryTable').style.display = 'table';
 
-        projectElements.forEach((elem) => {
+        projectElements.forEach((elem, index) => {
             const row = document.createElement('tr');
-            const facesDisplay = elem.faces.map(f => f.charAt(0).toUpperCase()).join(', ');
+
+            const facesDisplay = elem.faces
+                .map(f => f.charAt(0).toUpperCase())
+                .join(', ');
 
             row.innerHTML = `
                 <td>${elem.type}</td>
                 <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
-                <td title="${facesDisplay}">${elem.faces.length}</td>
+                <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
                 <td>${elem.area.toFixed(3)}</td>
+                <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
                 <td class="price-cell">£${elem.price.toFixed(2)}</td>
-                <td><button class="delete-btn" data-id="${elem.id}" style="color:#ef4444; background:none; border:none; cursor:pointer; font-weight:bold;">✕</button></td>
+                <td><button class="delete-btn" data-id="${elem.id}" title="Remove element">✕</button></td>
             `;
+
             summaryBody.appendChild(row);
         });
 
-        // Bind delete buttons
+        // Add delete handlers
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                deleteElement(parseInt(this.dataset.id));
+                const id = parseInt(this.dataset.id);
+                deleteElement(id);
             });
         });
     }
 
+    // =========================================================
+    // DELETE ELEMENT
+    // ---------------------------------------------------------
+    // Removes an element from the project by ID.
+    // =========================================================
     function deleteElement(id) {
         projectElements = projectElements.filter(e => e.id !== id);
         renderSummaryTable();
         updateProjectTotal();
-        // Update storage usually happens here too, or only on add. 
-        // For strict correctness, we should technically save state after delete too, 
-        // but original code didn't explicitly demand it.
     }
 
+    // =========================================================
+    // UPDATE PROJECT TOTAL
+    // ---------------------------------------------------------
+    // Calculates and displays the sum of all element prices.
+    // =========================================================
     function updateProjectTotal() {
         const total = projectElements.reduce((sum, elem) => sum + elem.price, 0);
         projectTotalDisplay.textContent = '£' + total.toFixed(2);
     }
 
+    // =========================================================
+    // RESET PROJECT
+    // ---------------------------------------------------------
+    // Clears all elements from the project.
+    // Keeps form values in localStorage.
+    // =========================================================
     function resetProject() {
-        if (projectElements.length > 0 && !confirm('Reset project? All elements will be removed.')) {
-            return;
+        if (projectElements.length > 0) {
+            if (!confirm('Are you sure you want to reset the project? All elements will be removed.')) {
+                return;
+            }
         }
         projectElements = [];
         renderSummaryTable();
@@ -508,20 +753,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // EVENT LISTENERS
     // =========================================================
-    
-    // 1. Inputs triggering re-render of Shaker model
-    [widthInput, heightInput, thicknessInput].forEach(input => {
-        input.addEventListener('input', function() {
-            this.classList.remove('input-error'); // auto-clear error
-            renderSVGDiagram();
-            updateCalculations();
+
+    // Colour standard radio change
+    colourStandardRadios.forEach(radio => {
+        radio.addEventListener('change', updateRalCodeVisibility);
+    });
+
+    // Legend checkbox changes
+    legendCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation(); // Prevent label click from triggering twice
+            toggleFace(this.dataset.face);
         });
     });
 
-    // 2. Legend Items (Chips) clicking
+    // Legend item clicks (on the label area, not checkbox)
     legendItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            // If checking hidden checkbox inside, don't double trigger
+            // Only toggle if click wasn't on the checkbox itself
             if (e.target.type !== 'checkbox') {
                 e.preventDefault();
                 toggleFace(this.dataset.face);
@@ -529,33 +778,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 3. General form changes
+    // Dimension inputs - update calculations and re-render diagram on change
+    [widthInput, heightInput, thicknessInput].forEach(input => {
+        input.addEventListener('input', function() {
+            renderSVGDiagram();
+            updateCalculations();
+        });
+    });
+
+    // Element type and price changes - update calculations
     elementTypeSelect.addEventListener('change', updateCalculations);
     pricePerM2Input.addEventListener('input', updateCalculations);
     paintLocationSelect.addEventListener('change', updateCalculations);
-    
-    colourStandardRadios.forEach(radio => {
-        radio.addEventListener('change', updateRalCodeVisibility);
-    });
 
-    // 4. Action Buttons
+    // Add element button
     addElementBtn.addEventListener('click', addElement);
+
+    // Reset project button
     resetProjectBtn.addEventListener('click', resetProject);
 
-    // Clear validation on interaction
+    // Clear validation errors on input
     elementTypeSelect.addEventListener('change', function() {
         this.classList.remove('input-error');
         elementTypeError.classList.remove('visible');
     });
+
     pricePerM2Input.addEventListener('input', function() {
         this.classList.remove('input-error');
         pricePerM2Error.classList.remove('visible');
+    });
+
+    [widthInput, heightInput, thicknessInput].forEach((input, index) => {
+        input.addEventListener('input', function() {
+            this.classList.remove('input-error');
+            [widthError, heightError, thicknessError][index].classList.remove('visible');
+        });
     });
 
     // =========================================================
     // INITIALIZATION
     // =========================================================
     loadFormFromStorage();
+    updateRalCodeVisibility();
     renderSVGDiagram();
     updateFaceUI();
     renderSummaryTable();
