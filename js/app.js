@@ -207,15 +207,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // =========================================================
 
         // Maximum dimensions for the front rectangle in pixels
-        const maxFrontWidth = 260;
-        const maxFrontHeight = 180;
+        const maxFrontWidth = 200;
+        const maxFrontHeight = 150;
 
         // Calculate front rectangle size maintaining aspect ratio
         const widthToHeightRatio = W / H;
         let frontWidthPx, frontHeightPx;
 
         if (widthToHeightRatio >= 1) {
-            // Wider than tall or square
             frontWidthPx = maxFrontWidth;
             frontHeightPx = maxFrontWidth / widthToHeightRatio;
             if (frontHeightPx > maxFrontHeight) {
@@ -223,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 frontWidthPx = maxFrontHeight * widthToHeightRatio;
             }
         } else {
-            // Taller than wide
             frontHeightPx = maxFrontHeight;
             frontWidthPx = maxFrontHeight * widthToHeightRatio;
             if (frontWidthPx > maxFrontWidth) {
@@ -232,68 +230,77 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // =========================================================
-        // DEPTH CALCULATION (based on thickness)
-        // ---------------------------------------------------------
-        // The depth affects the size of the Top and Right faces.
-        // Greater thickness = deeper top/right faces.
-        // =========================================================
+        // Depth calculation
         const depthFactor = T / Math.max(W, H);
         let depthPx = frontWidthPx * depthFactor;
-        // Clamp depth to a reasonable range (10-40 pixels)
-        depthPx = Math.max(10, Math.min(depthPx, 40));
+        depthPx = Math.max(12, Math.min(depthPx, 35));
 
-        // =========================================================
-        // SVG LAYOUT CALCULATIONS
-        // ---------------------------------------------------------
-        // Isometric-style 3D box with:
-        // - Front face: main rectangle
-        // - Top face: parallelogram attached to top edge
-        // - Right face: parallelogram attached to right edge
-        // =========================================================
+        // Padding and layout
+        const padding = 30;
+        const barGap = 15; // Gap between main model and side bars
+        const barThickness = 20; // Thickness of bottom/left bars
 
-        // Padding around the diagram
-        const padding = 25;
+        // Calculate positions
+        const mainModelX = padding + barThickness + barGap;
+        const mainModelY = padding + depthPx;
 
-        // Total SVG dimensions (account for depth offset)
-        const svgWidth = frontWidthPx + depthPx + 2 * padding;
-        const svgHeight = frontHeightPx + depthPx + 2 * padding;
-
-        // Front face corners (bottom-left origin for the 3D effect)
-        const frontX = padding;
-        const frontY = padding + depthPx;
-
-        // Calculate polygon points for each face
-        // Front face (rectangle)
+        // Front face (main rectangle)
         const frontPoints = [
-            [frontX, frontY],
-            [frontX + frontWidthPx, frontY],
-            [frontX + frontWidthPx, frontY + frontHeightPx],
-            [frontX, frontY + frontHeightPx]
+            [mainModelX, mainModelY],
+            [mainModelX + frontWidthPx, mainModelY],
+            [mainModelX + frontWidthPx, mainModelY + frontHeightPx],
+            [mainModelX, mainModelY + frontHeightPx]
         ];
 
-        // Top face (parallelogram - slants back and to the right)
+        // Top face
         const topPoints = [
-            [frontX, frontY],
-            [frontX + depthPx, frontY - depthPx],
-            [frontX + frontWidthPx + depthPx, frontY - depthPx],
-            [frontX + frontWidthPx, frontY]
+            [mainModelX, mainModelY],
+            [mainModelX + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx, mainModelY]
         ];
 
-        // Right face (parallelogram - slants back and up)
+        // Right face
         const rightPoints = [
-            [frontX + frontWidthPx, frontY],
-            [frontX + frontWidthPx + depthPx, frontY - depthPx],
-            [frontX + frontWidthPx + depthPx, frontY + frontHeightPx - depthPx],
-            [frontX + frontWidthPx, frontY + frontHeightPx]
+            [mainModelX + frontWidthPx, mainModelY],
+            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
+            [mainModelX + frontWidthPx + depthPx, mainModelY + frontHeightPx - depthPx],
+            [mainModelX + frontWidthPx, mainModelY + frontHeightPx]
         ];
 
-        // Helper function to convert points array to SVG polygon points string
+        // Back face (hidden behind, shown with dashed outline and arrow)
+        const backX = mainModelX + depthPx;
+        const backY = mainModelY - depthPx;
+        const backPoints = [
+            [backX, backY],
+            [backX + frontWidthPx, backY],
+            [backX + frontWidthPx, backY + frontHeightPx],
+            [backX, backY + frontHeightPx]
+        ];
+
+        // Bottom bar (horizontal bar below main model)
+        const bottomBarY = mainModelY + frontHeightPx + barGap;
+        const bottomBarPoints = [
+            [mainModelX, bottomBarY],
+            [mainModelX + frontWidthPx, bottomBarY],
+            [mainModelX + frontWidthPx, bottomBarY + barThickness],
+            [mainModelX, bottomBarY + barThickness]
+        ];
+
+        // Left bar (vertical bar to the left of main model)
+        const leftBarX = padding;
+        const leftBarPoints = [
+            [leftBarX, mainModelY],
+            [leftBarX + barThickness, mainModelY],
+            [leftBarX + barThickness, mainModelY + frontHeightPx],
+            [leftBarX, mainModelY + frontHeightPx]
+        ];
+
+        // Helper functions
         function pointsToString(points) {
             return points.map(p => p.join(',')).join(' ');
         }
 
-        // Calculate centroids for label positioning
         function getCentroid(points) {
             const n = points.length;
             let cx = 0, cy = 0;
@@ -304,6 +311,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const frontCenter = getCentroid(frontPoints);
         const topCenter = getCentroid(topPoints);
         const rightCenter = getCentroid(rightPoints);
+        const backCenter = getCentroid(backPoints);
+        const bottomCenter = getCentroid(bottomBarPoints);
+        const leftCenter = getCentroid(leftBarPoints);
+
+        // Calculate total SVG dimensions
+        const svgWidth = mainModelX + frontWidthPx + depthPx + padding;
+        const svgHeight = bottomBarY + barThickness + padding + 30; // Extra space for label
+
+        // Arrow from back to main model
+        const arrowStartX = backCenter[0];
+        const arrowStartY = backCenter[1];
+        const arrowEndX = frontCenter[0];
+        const arrowEndY = frontCenter[1];
 
         // =========================================================
         // BUILD SVG CONTENT
@@ -312,12 +332,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
              xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <!-- Panel background gradient -->
                 <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#3a4038" stop-opacity="0.95"/>
                     <stop offset="100%" stop-color="#2f352e" stop-opacity="0.98"/>
                 </linearGradient>
-                <!-- Glow filter for selected faces -->
                 <filter id="glow">
                     <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                     <feMerge>
@@ -325,52 +343,80 @@ document.addEventListener('DOMContentLoaded', function() {
                         <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                 </filter>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#a8b5a0" />
+                </marker>
             </defs>
 
             <!-- Background panel -->
             <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" rx="18" class="scene-backdrop" fill="url(#panelGradient)" />
             <rect x="12" y="12" width="${svgWidth - 24}" height="${svgHeight - 24}" rx="14" class="scene-grid" />
 
-            <!-- Back edges (dashed lines to show hidden edges) -->
-            <line class="edge-line"
-                  x1="${frontX + depthPx}" y1="${frontY - depthPx + frontHeightPx}"
-                  x2="${frontX + depthPx}" y2="${frontY - depthPx}"
-                  stroke-dasharray="4 3" opacity="0.4"/>
-            <line class="edge-line"
-                  x1="${frontX}" y1="${frontY + frontHeightPx}"
-                  x2="${frontX + depthPx}" y2="${frontY - depthPx + frontHeightPx}"
-                  stroke-dasharray="4 3" opacity="0.4"/>
+            <!-- Back face (dashed outline) -->
+            <g class="svg-face-3d svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
+                <polygon class="face-polygon" points="${pointsToString(backPoints)}" 
+                         stroke-dasharray="5 3" fill-opacity="0.3"/>
+                <text class="face-label-text" x="${backCenter[0]}" y="${backCenter[1]}" fill="#a8b5a0" opacity="0.7">Back</text>
+            </g>
 
-            <!-- Top face (parallelogram - draw first so it's behind) -->
+            <!-- Arrow from back to model -->
+            <line x1="${arrowStartX}" y1="${arrowStartY}" 
+                  x2="${arrowEndX}" y2="${arrowEndY}" 
+                  stroke="#a8b5a0" stroke-width="1.5" 
+                  stroke-dasharray="3 2" opacity="0.6"
+                  marker-end="url(#arrowhead)"/>
+
+            <!-- Top face -->
             <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(topPoints)}"/>
                 <text class="face-label-text" x="${topCenter[0]}" y="${topCenter[1]}">Top</text>
             </g>
 
-            <!-- Right face (parallelogram) -->
+            <!-- Right face -->
             <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(rightPoints)}"/>
                 <text class="face-label-text" x="${rightCenter[0]}" y="${rightCenter[1]}">Right</text>
             </g>
 
-            <!-- Front face (main rectangle - drawn last to be on top) -->
+            <!-- Front face -->
             <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front" filter="url(#glow)">
                 <polygon class="face-polygon" points="${pointsToString(frontPoints)}"/>
                 <text class="face-label-text" x="${frontCenter[0]}" y="${frontCenter[1]}">Front</text>
             </g>
 
-            <!-- 3D edge highlights (dark lines at corners for depth) -->
+            <!-- Bottom bar -->
+            <g class="svg-face-3d svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom" filter="url(#glow)">
+                <rect class="face-polygon" x="${bottomBarPoints[0][0]}" y="${bottomBarPoints[0][1]}" 
+                      width="${frontWidthPx}" height="${barThickness}" rx="3"/>
+                <text class="face-label-text" x="${bottomCenter[0]}" y="${bottomCenter[1]}">Bottom</text>
+            </g>
+
+            <!-- Left bar -->
+            <g class="svg-face-3d svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left" filter="url(#glow)">
+                <rect class="face-polygon" x="${leftBarPoints[0][0]}" y="${leftBarPoints[0][1]}" 
+                      width="${barThickness}" height="${frontHeightPx}" rx="3"/>
+                <text class="face-label-text" x="${leftCenter[0]}" y="${leftCenter[1]}" 
+                      transform="rotate(-90 ${leftCenter[0]} ${leftCenter[1]})">Left</text>
+            </g>
+
+            <!-- 3D edge highlights -->
             <line class="edge-line-dark"
-                  x1="${frontX + frontWidthPx}" y1="${frontY}"
-                  x2="${frontX + frontWidthPx + depthPx}" y2="${frontY - depthPx}"/>
+                  x1="${mainModelX + frontWidthPx}" y1="${mainModelY}"
+                  x2="${mainModelX + frontWidthPx + depthPx}" y2="${mainModelY - depthPx}"/>
             <line class="edge-line-dark"
-                  x1="${frontX}" y1="${frontY}"
-                  x2="${frontX + depthPx}" y2="${frontY - depthPx}"/>
+                  x1="${mainModelX}" y1="${mainModelY}"
+                  x2="${mainModelX + depthPx}" y2="${mainModelY - depthPx}"/>
+
+            <!-- Label under model -->
+            <text x="${svgWidth / 2}" y="${svgHeight - 10}" 
+                  fill="#a8b5a0" font-size="11" text-anchor="middle" font-weight="600">
+                ${wDisplay} × ${hDisplay} × ${tDisplay} mm
+            </text>
         </svg>`;
 
         svgDiagramWrapper.innerHTML = svgContent;
 
-        // Add click handlers to the 3 visible SVG faces (front, top, right)
+        // Add click handlers to all faces
         const svgFaces = svgDiagramWrapper.querySelectorAll('.svg-face-3d');
         svgFaces.forEach(face => {
             face.addEventListener('click', function() {
