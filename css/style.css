@@ -335,13 +335,13 @@ input::placeholder {
 
 .scene-grid {
     fill: none;
-    stroke: rgba(83, 194, 255, 0.12);
+    stroke: rgba(107, 124, 94, 0.15);
     stroke-width: 1.2;
     stroke-dasharray: 4 6;
 }
 
 .scene-backdrop {
-    stroke: rgba(83, 194, 255, 0.08);
+    stroke: rgba(107, 124, 94, 0.1);
     stroke-width: 1.4;
 }
 
@@ -363,59 +363,59 @@ input::placeholder {
 
 /* Front face - slightly darker */
 .svg-face-front .face-polygon {
-    fill: #1f2c44;
-    stroke: #3c4d6d;
+    fill: #8b7355;
+    stroke: #6b5645;
 }
 
 .svg-face-front:hover .face-polygon {
-    fill: #243554;
+    fill: #9b8365;
     stroke: var(--accent);
     stroke-width: 2.5;
 }
 
 .svg-face-front.selected .face-polygon {
-    fill: url(#frontSelectedGradient);
-    stroke: #a2f6c5;
+    fill: #f5e6d3;
+    stroke: #d4c4a8;
     stroke-width: 2.5;
-    filter: drop-shadow(0 6px 12px rgba(83, 194, 255, 0.4));
+    filter: drop-shadow(0 4px 8px rgba(107, 124, 94, 0.3));
 }
 
 /* Top face - lighter (receives more light) */
 .svg-face-top .face-polygon {
-    fill: #243554;
-    stroke: #3c4d6d;
+    fill: #9b8365;
+    stroke: #7b6655;
 }
 
 .svg-face-top:hover .face-polygon {
-    fill: #2a3d5e;
+    fill: #ab9375;
     stroke: var(--accent);
     stroke-width: 2.5;
 }
 
 .svg-face-top.selected .face-polygon {
-    fill: url(#topSelectedGradient);
-    stroke: #a2f6c5;
+    fill: #f5e6d3;
+    stroke: #d4c4a8;
     stroke-width: 2.5;
-    filter: drop-shadow(0 6px 12px rgba(83, 194, 255, 0.4));
+    filter: drop-shadow(0 4px 8px rgba(107, 124, 94, 0.3));
 }
 
 /* Right face - medium (side lighting) */
 .svg-face-right .face-polygon {
-    fill: #1a2538;
-    stroke: #3c4d6d;
+    fill: #7b6655;
+    stroke: #6b5645;
 }
 
 .svg-face-right:hover .face-polygon {
-    fill: #1f2c44;
+    fill: #8b7665;
     stroke: var(--accent);
     stroke-width: 2.5;
 }
 
 .svg-face-right.selected .face-polygon {
-    fill: url(#rightSelectedGradient);
-    stroke: #a2f6c5;
+    fill: #f5e6d3;
+    stroke: #d4c4a8;
     stroke-width: 2.5;
-    filter: drop-shadow(0 6px 12px rgba(83, 194, 255, 0.4));
+    filter: drop-shadow(0 4px 8px rgba(107, 124, 94, 0.3));
 }
 
 /* Face labels in SVG */
@@ -431,28 +431,28 @@ input::placeholder {
 }
 
 .svg-face-3d.selected .face-label-text {
-    fill: #04172e;
+    fill: #4a3f2a;
     font-weight: 800;
 }
 
 /* Subtle lift on hover/selection for depth */
 .svg-face-3d:hover .face-polygon {
-    filter: drop-shadow(0 4px 10px rgba(83, 194, 255, 0.3));
+    filter: drop-shadow(0 3px 8px rgba(107, 124, 94, 0.25));
 }
 
 .svg-face-3d.selected .face-polygon {
-    filter: drop-shadow(0 6px 12px rgba(83, 194, 255, 0.4));
+    filter: drop-shadow(0 4px 10px rgba(107, 124, 94, 0.3));
 }
 
 /* 3D edge lines for depth effect */
 .edge-line {
-    stroke: #3c4d6d;
+    stroke: #6b5645;
     stroke-width: 1.5;
     fill: none;
 }
 
 .edge-line-dark {
-    stroke: #4a5d7d;
+    stroke: #7b6655;
     stroke-width: 2;
     fill: none;
 }
@@ -464,7 +464,7 @@ input::placeholder {
     gap: 8px;
     min-width: 160px;
     padding: 12px;
-    background: rgba(15, 21, 40, 0.7);
+    background: rgba(47, 53, 46, 0.7);
     border-radius: 14px;
     border: 1px solid var(--border);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -500,7 +500,7 @@ input::placeholder {
 }
 
 .legend-item:hover {
-    background: rgba(83, 194, 255, 0.08);
+    background: rgba(107, 124, 94, 0.1);
     transform: translateX(2px);
 }
 
@@ -508,17 +508,17 @@ input::placeholder {
     width: 18px;
     height: 18px;
     border-radius: 4px;
-    border: 2px solid #3c4d6d;
-    background: #1f2c44;
+    border: 2px solid #6b5645;
+    background: #8b7355;
     flex-shrink: 0;
     transition: all 0.2s ease;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .legend-item.selected .legend-color {
-    background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 100%);
-    border-color: rgba(162, 246, 197, 0.9);
-    box-shadow: 0 0 12px rgba(83, 194, 255, 0.35);
+    background: #f5e6d3;
+    border-color: #d4c4a8;
+    box-shadow: 0 0 10px rgba(107, 124, 94, 0.3);
 }
 
 .legend-label {
@@ -544,9 +544,9 @@ input::placeholder {
 .dimension-display {
     margin-top: 16px;
     padding: 12px 16px;
-    background: rgba(83, 194, 255, 0.06);
+    background: rgba(107, 124, 94, 0.1);
     border-radius: 12px;
-    border: 1px solid rgba(83, 194, 255, 0.18);
+    border: 1px solid rgba(107, 124, 94, 0.25);
     text-align: center;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
@@ -573,11 +573,11 @@ input::placeholder {
 
 /* Calculation result */
 .calc-result {
-    background: linear-gradient(135deg, rgba(83, 194, 255, 0.08) 0%, rgba(162, 246, 197, 0.06) 100%);
+    background: rgba(107, 124, 94, 0.12);
     border-radius: 14px;
     padding: 16px;
     margin-top: 20px;
-    border: 1px solid rgba(83, 194, 255, 0.2);
+    border: 1px solid rgba(107, 124, 94, 0.25);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -589,7 +589,7 @@ input::placeholder {
 }
 
 .calc-row:not(:last-child) {
-    border-bottom: 1px solid rgba(37, 50, 75, 0.7);
+    border-bottom: 1px solid rgba(74, 85, 72, 0.5);
 }
 
 .calc-label {
@@ -623,7 +623,7 @@ input::placeholder {
 }
 
 .summary-table th {
-    background: #0f1528;
+    background: #2f352e;
     color: var(--text-secondary);
     font-weight: 700;
     padding: 12px 10px;
@@ -639,7 +639,7 @@ input::placeholder {
 }
 
 .summary-table tr:hover td {
-    background: rgba(83, 194, 255, 0.06);
+    background: rgba(107, 124, 94, 0.08);
 }
 
 .summary-table .price-cell {
@@ -680,11 +680,11 @@ input::placeholder {
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: linear-gradient(120deg, #2b6be6 0%, #53c2ff 50%, #a2f6c5 100%);
+    background: linear-gradient(120deg, #6b7c5e 0%, #8a9b7a 100%);
     border-radius: 14px;
     margin-top: 16px;
-    color: #041020;
-    box-shadow: 0 10px 30px rgba(83, 194, 255, 0.35);
+    color: #1a1f1a;
+    box-shadow: 0 8px 20px rgba(107, 124, 94, 0.25);
 }
 
 .project-total .label {
