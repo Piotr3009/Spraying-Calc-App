@@ -305,13 +305,27 @@ document.addEventListener('DOMContentLoaded', function() {
             <defs>
                 <!-- Gradient for selected faces -->
                 <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#8FBC5A"/>
-                    <stop offset="100%" style="stop-color:#6B8E23"/>
+                    <stop offset="0%" style="stop-color:#a2f6c5"/>
+                    <stop offset="100%" style="stop-color:#53c2ff"/>
                 </linearGradient>
+                <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#1d2738" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#0f1625" stop-opacity="0.98"/>
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
             </defs>
 
+            <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" rx="18" class="scene-backdrop" fill="url(#panelGradient)" />
+            <rect x="12" y="12" width="${svgWidth - 24}" height="${svgHeight - 24}" rx="14" class="scene-grid" />
+
             <!-- Back face (dashed outline behind front for depth) -->
-            <g class="svg-face svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
+            <g class="svg-face svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${backX}" y="${backY}"
                       width="${backWidth}" height="${backHeight}" rx="3"/>
@@ -320,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </g>
 
             <!-- Top strip (horizontal, above front) -->
-            <g class="svg-face svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top">
+            <g class="svg-face svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${topX}" y="${topY}"
                       width="${topWidth}" height="${topHeight}" rx="2"/>
@@ -329,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </g>
 
             <!-- Bottom strip (horizontal, below front) -->
-            <g class="svg-face svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom">
+            <g class="svg-face svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${bottomX}" y="${bottomY}"
                       width="${bottomWidth}" height="${bottomHeight}" rx="2"/>
@@ -338,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </g>
 
             <!-- Left strip (vertical, to the left of front) -->
-            <g class="svg-face svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left">
+            <g class="svg-face svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${leftX}" y="${leftY}"
                       width="${leftWidth}" height="${leftHeight}" rx="2"/>
@@ -348,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </g>
 
             <!-- Right strip (vertical, to the right of front) -->
-            <g class="svg-face svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right">
+            <g class="svg-face svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${rightX}" y="${rightY}"
                       width="${rightWidth}" height="${rightHeight}" rx="2"/>
@@ -358,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </g>
 
             <!-- Front face (main rectangle - drawn last to be on top) -->
-            <g class="svg-face svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front">
+            <g class="svg-face svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front" filter="url(#glow)">
                 <rect class="svg-face-fill"
                       x="${frontX}" y="${frontY}"
                       width="${frontWidth}" height="${frontHeight}" rx="3"/>

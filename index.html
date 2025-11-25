@@ -11,8 +11,14 @@
 <body>
     <div class="container">
         <header>
+            <div class="hero-pill">Precision spray planning</div>
             <h1>Spray Painting Area & Price Calculator</h1>
-            <p>Calculate painting areas and costs for joinery elements</p>
+            <p>Create a clear brief for your sprayer with dimensions, colour data and a visual map of every coated face.</p>
+            <div class="hero-meta">
+                <span class="meta-chip">Live area & price preview</span>
+                <span class="meta-chip">Clickable 3D-style face map</span>
+                <span class="meta-chip">Reusable project template</span>
+            </div>
         </header>
 
         <div class="main-layout">
@@ -133,7 +139,11 @@
             <div class="right-panel">
                 <!-- Visualisation -->
                 <div class="card">
-                    <h2 class="card-title">Select Faces to Spray</h2>
+                    <div class="card-title-row">
+                        <h2 class="card-title">Select Faces to Spray</h2>
+                        <div class="title-badge">Interactive model</div>
+                    </div>
+                    <p class="section-lede">Tap the diagram to toggle sides. The neon-highlighted faces show exactly what will be coated.</p>
                     <div class="visualisation-container">
                         <!-- Face Selection Container with SVG Diagram and Legend -->
                         <div class="face-selection-container">
@@ -144,6 +154,10 @@
 
                             <!-- Legend with checkboxes -->
                             <div class="face-legend">
+                                <div class="legend-header">
+                                    <div class="legend-title">Faces</div>
+                                    <div class="legend-subtitle">Glow = selected</div>
+                                </div>
                                 <label class="legend-item selected" data-face="front">
                                     <span class="legend-color"></span>
                                     <span class="legend-label">Front</span>
