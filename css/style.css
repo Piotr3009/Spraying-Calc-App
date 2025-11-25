@@ -270,12 +270,16 @@ input::placeholder {
     transition: all 0.2s ease;
 }
 
+/* Base polygon styling shared across faces */
+.svg-face-3d .face-polygon {
+    stroke-width: 2;
+    transition: all 0.2s ease;
+}
+
 /* Front face - slightly darker olive */
 .svg-face-front .face-polygon {
     fill: #D8DEC8;
     stroke: #8F9779;
-    stroke-width: 2;
-    transition: all 0.2s ease;
 }
 
 .svg-face-front:hover .face-polygon {
@@ -294,8 +298,6 @@ input::placeholder {
 .svg-face-top .face-polygon {
     fill: #E8ECE0;
     stroke: #A8B090;
-    stroke-width: 2;
-    transition: all 0.2s ease;
 }
 
 .svg-face-top:hover .face-polygon {
@@ -314,8 +316,6 @@ input::placeholder {
 .svg-face-right .face-polygon {
     fill: #C5CDB0;
     stroke: #8F9779;
-    stroke-width: 2;
-    transition: all 0.2s ease;
 }
 
 .svg-face-right:hover .face-polygon {
@@ -344,6 +344,15 @@ input::placeholder {
 .svg-face-3d.selected .face-label-text {
     fill: #2D3B1F;
     font-weight: 700;
+}
+
+/* Subtle lift on hover/selection for depth */
+.svg-face-3d:hover .face-polygon {
+    filter: drop-shadow(0 4px 10px rgba(85, 107, 47, 0.2));
+}
+
+.svg-face-3d.selected .face-polygon {
+    filter: drop-shadow(0 6px 12px rgba(63, 85, 35, 0.28));
 }
 
 /* 3D edge lines for depth effect */
