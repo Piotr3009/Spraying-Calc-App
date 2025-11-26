@@ -824,9 +824,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Front lights
                 { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.6 },
                 { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
-                // Right side lights - LOWER for mid-height reflection
-                { x: canvas.width * 0.5, y: canvas.height * 0.45, radius: 110, intensity: 0.65 },
-                { x: canvas.width * 0.55, y: canvas.height * 0.5, radius: 90, intensity: 0.55 },
+                // Right side light - closer to front (~20 degrees), lower
+                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.65 },
+                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.55 },
                 // Back lights
                 { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.5 },
                 { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
@@ -1303,9 +1303,9 @@ document.addEventListener('DOMContentLoaded', function() {
         leftLight.position.set(-8, 5, 2);
         scene.add(leftLight);
 
-        // Right side light - LOWER, at element mid-height for visible reflection
+        // Right side light - LOWER, at element mid-height, 20 degrees from front
         const rightLight = new THREE.DirectionalLight(0xf0f5ff, 0.6);
-        rightLight.position.set(8, 1.5, 0);
+        rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
 
         // Top light
