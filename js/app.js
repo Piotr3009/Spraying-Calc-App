@@ -1,7 +1,8 @@
 // js/app.js
 // =========================================================
 // SPRAY PAINTING AREA & PRICE CALCULATOR - Advanced 3D Version
-// Features: Door Frame, Sapele Wood, RAL Colors, PBR Textures
+// Features: All wood types, Door Frame, Shaker, RAL Colors, PBR Textures
+// Environment Lighting, Material Caching
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // =========================================================
-    // RAL COLOR DATABASE (common RAL colors)
+    // RAL COLOR DATABASE
     // =========================================================
     const RAL_COLORS = {
         '1000': 0xCDBA88, '1001': 0xD0B084, '1002': 0xD2AA6D, '1003': 0xF9A800,
@@ -144,22 +145,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     function getSelectedPaintColor() {
         const colourStandard = document.querySelector('input[name="colourStandard"]:checked')?.value;
-        
         if (colourStandard === 'RAL') {
             const ralCode = ralCodeInput.value.trim();
             if (ralCode && RAL_COLORS[ralCode]) {
                 return RAL_COLORS[ralCode];
             }
         }
-        
-        // Default olive color
-        return 0x708238;
+        return 0x708238; // Default olive
     }
 
     // =========================================================
-    // SAPELE WOOD TEXTURE GENERATOR
+    // PROCEDURAL TEXTURE GENERATOR CLASS
     // =========================================================
-    class SapeleTextureGenerator {
+    class ProceduralTextureGenerator {
         constructor(width = 512, height = 512) {
             this.width = width;
             this.height = height;
@@ -172,8 +170,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return canvas;
         }
 
-        // Sapele diffuse - reddish-brown with interlocked grain
-        createDiffuse() {
+        // =====================================================
+        // SAPELE WOOD TEXTURE (Primary wood - reddish brown)
+        // =====================================================
+        createSapeleTextures() {
+            const diffuse = this.createSapeleDiffuse();
+            const normal = this.createSapeleNormal();
+            const roughness = this.createSapeleRoughness();
+            return { diffuse, normal, roughness };
+        }
+
+        createSapeleDiffuse() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
@@ -225,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.stroke();
             }
 
-            // Pores (sapele has medium-sized pores)
+            // Pores
             for (let i = 0; i < 3000; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
@@ -241,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
                 const len = 30 + Math.random() * 80;
-                
                 ctx.strokeStyle = `rgba(200, 140, 100, ${Math.random() * 0.12})`;
                 ctx.lineWidth = 1 + Math.random() * 2;
                 ctx.beginPath();
@@ -253,15 +259,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(1, 1);
             return texture;
         }
 
-        createNormal() {
+        createSapeleNormal() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
-            // Base normal
             ctx.fillStyle = 'rgb(128, 128, 255)';
             ctx.fillRect(0, 0, this.width, this.height);
 
@@ -269,13 +273,11 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let i = 0; i < 100; i++) {
                 const y = i * (this.height / 70);
                 const waveFreq = 0.01 + Math.random() * 0.01;
-                
                 const nx = 128 + (Math.random() - 0.5) * 20;
                 ctx.strokeStyle = `rgb(${nx}, 128, 245)`;
                 ctx.lineWidth = 2 + Math.random() * 2;
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                
                 for (let x = 0; x < this.width; x += 2) {
                     const offsetY = Math.sin(x * waveFreq) * 3;
                     ctx.lineTo(x, y + offsetY);
@@ -299,15 +301,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return texture;
         }
 
-        createRoughness() {
+        createSapeleRoughness() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
-            // Sapele can be polished to a nice finish - medium roughness
             ctx.fillStyle = 'rgb(120, 120, 120)';
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Grain variation
             for (let i = 0; i < 80; i++) {
                 const y = i * (this.height / 60);
                 const bandValue = (Math.floor(i / 4) % 2 === 0) ? 130 : 110;
@@ -327,29 +327,379 @@ document.addEventListener('DOMContentLoaded', function() {
             return texture;
         }
 
-        createTextures() {
-            return {
-                diffuse: this.createDiffuse(),
-                normal: this.createNormal(),
-                roughness: this.createRoughness()
-            };
-        }
-    }
-
-    // =========================================================
-    // PAINTED TEXTURE GENERATOR (with selected color)
-    // =========================================================
-    class PaintedTextureGenerator {
-        constructor(width = 512, height = 512) {
-            this.width = width;
-            this.height = height;
+        // =====================================================
+        // MDF TEXTURE WITH NORMAL MAP
+        // =====================================================
+        createMDFTextures() {
+            const diffuse = this.createMDFDiffuse();
+            const normal = this.createMDFNormal();
+            const roughness = this.createMDFRoughness();
+            return { diffuse, normal, roughness };
         }
 
-        createCanvas() {
-            const canvas = document.createElement('canvas');
-            canvas.width = this.width;
-            canvas.height = this.height;
-            return canvas;
+        createMDFDiffuse() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            // Use sapele-like color for MDF
+            const gradient = ctx.createLinearGradient(0, 0, this.width, this.height);
+            gradient.addColorStop(0, '#a86040');
+            gradient.addColorStop(0.5, '#955538');
+            gradient.addColorStop(1, '#a86040');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            // Fine MDF particle texture
+            for (let i = 0; i < 50000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const size = Math.random() * 2 + 0.5;
+                const brightness = 130 + Math.random() * 40;
+                const r = brightness;
+                const g = brightness * 0.65;
+                const b = brightness * 0.45;
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.random() * 0.3 + 0.1})`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Subtle fiber lines
+            ctx.strokeStyle = 'rgba(80, 40, 25, 0.1)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < 200; i++) {
+                const y = Math.random() * this.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                for (let x = 0; x < this.width; x += 5) {
+                    ctx.lineTo(x, y + Math.sin(x * 0.02) * 2 + (Math.random() - 0.5) * 2);
+                }
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            return texture;
+        }
+
+        createMDFNormal() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(128, 128, 255)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 20000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const size = Math.random() * 3 + 1;
+                const nx = 128 + (Math.random() - 0.5) * 30;
+                const ny = 128 + (Math.random() - 0.5) * 30;
+                ctx.fillStyle = `rgb(${nx}, ${ny}, 245)`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            return texture;
+        }
+
+        createMDFRoughness() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(180, 180, 180)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 10000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const size = Math.random() * 4 + 1;
+                const value = 150 + Math.random() * 60;
+                ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            return texture;
+        }
+
+        // =====================================================
+        // TIMBER/WOOD TEXTURE WITH NORMAL MAP
+        // =====================================================
+        createTimberTextures() {
+            const diffuse = this.createTimberDiffuse();
+            const normal = this.createTimberNormal();
+            const roughness = this.createTimberRoughness();
+            return { diffuse, normal, roughness };
+        }
+
+        createTimberDiffuse() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            // Sapele-like base wood color
+            const gradient = ctx.createLinearGradient(0, 0, 0, this.height);
+            gradient.addColorStop(0, '#a55540');
+            gradient.addColorStop(0.3, '#8b4532');
+            gradient.addColorStop(0.7, '#7a3d2c');
+            gradient.addColorStop(1, '#8b4532');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            // Wood grain - main rings
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 60; i++) {
+                const y = i * (this.height / 50);
+                const waveAmplitude = 3 + Math.random() * 4;
+                const waveFreq = 0.01 + Math.random() * 0.02;
+                const darkness = Math.random() * 0.4;
+                
+                ctx.strokeStyle = `rgba(50, 25, 15, ${0.3 + darkness})`;
+                ctx.lineWidth = 1 + Math.random() * 2;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                
+                for (let x = 0; x < this.width; x += 2) {
+                    const offsetY = Math.sin(x * waveFreq) * waveAmplitude + 
+                                   Math.sin(x * waveFreq * 2.5) * (waveAmplitude * 0.5);
+                    ctx.lineTo(x, y + offsetY);
+                }
+                ctx.stroke();
+            }
+
+            // Fine grain lines
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < 150; i++) {
+                const y = Math.random() * this.height;
+                ctx.strokeStyle = `rgba(40, 20, 10, ${Math.random() * 0.2})`;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                for (let x = 0; x < this.width; x += 3) {
+                    ctx.lineTo(x, y + Math.sin(x * 0.05) * 1.5 + (Math.random() - 0.5));
+                }
+                ctx.stroke();
+            }
+
+            // Wood knots
+            for (let i = 0; i < 3; i++) {
+                const knotX = 50 + Math.random() * (this.width - 100);
+                const knotY = 50 + Math.random() * (this.height - 100);
+                const knotSize = 15 + Math.random() * 25;
+                
+                const knotGradient = ctx.createRadialGradient(
+                    knotX, knotY, 0,
+                    knotX, knotY, knotSize
+                );
+                knotGradient.addColorStop(0, '#3d2515');
+                knotGradient.addColorStop(0.3, '#4a3020');
+                knotGradient.addColorStop(0.7, '#5a3d28');
+                knotGradient.addColorStop(1, '#7a4532');
+                
+                ctx.fillStyle = knotGradient;
+                ctx.beginPath();
+                ctx.ellipse(knotX, knotY, knotSize, knotSize * 0.7, Math.random() * Math.PI, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Knot rings
+                for (let r = 0; r < 5; r++) {
+                    ctx.strokeStyle = `rgba(30, 15, 8, ${0.3 - r * 0.05})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.ellipse(knotX, knotY, knotSize * (0.3 + r * 0.15), knotSize * 0.7 * (0.3 + r * 0.15), 
+                               Math.random() * 0.2, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            // Highlight streaks
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const len = 50 + Math.random() * 100;
+                
+                ctx.strokeStyle = `rgba(200, 150, 100, ${Math.random() * 0.15})`;
+                ctx.lineWidth = 2 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + len, y + (Math.random() - 0.5) * 10);
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        createTimberNormal() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(128, 128, 255)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 80; i++) {
+                const y = i * (this.height / 60);
+                const waveFreq = 0.01 + Math.random() * 0.015;
+                ctx.strokeStyle = `rgb(${120 + Math.random() * 16}, ${128 + (Math.random() - 0.5) * 20}, 240)`;
+                ctx.lineWidth = 2 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                for (let x = 0; x < this.width; x += 2) {
+                    const offsetY = Math.sin(x * waveFreq) * 4;
+                    ctx.lineTo(x, y + offsetY);
+                }
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < 5000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const nx = 128 + (Math.random() - 0.5) * 40;
+                const ny = 128 + (Math.random() - 0.5) * 40;
+                ctx.fillStyle = `rgb(${nx}, ${ny}, 250)`;
+                ctx.fillRect(x, y, 2, 1);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        createTimberRoughness() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(140, 140, 140)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 60; i++) {
+                const y = i * (this.height / 50);
+                ctx.strokeStyle = `rgb(${120 + Math.random() * 40}, ${120 + Math.random() * 40}, ${120 + Math.random() * 40})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                for (let x = 0; x < this.width; x += 5) {
+                    ctx.lineTo(x, y + Math.sin(x * 0.02) * 3);
+                }
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        // =====================================================
+        // VENEER TEXTURE WITH NORMAL MAP
+        // =====================================================
+        createVeneerTextures() {
+            const diffuse = this.createVeneerDiffuse();
+            const normal = this.createVeneerNormal();
+            const roughness = this.createVeneerRoughness();
+            return { diffuse, normal, roughness };
+        }
+
+        createVeneerDiffuse() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            // Sapele veneer - smoother, more refined
+            const gradient = ctx.createLinearGradient(0, 0, this.width, 0);
+            gradient.addColorStop(0, '#b06048');
+            gradient.addColorStop(0.5, '#9a5038');
+            gradient.addColorStop(1, '#a85840');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            // Elegant thin grain lines
+            for (let i = 0; i < 100; i++) {
+                const y = Math.random() * this.height;
+                const alpha = 0.05 + Math.random() * 0.1;
+                ctx.strokeStyle = `rgba(60, 30, 20, ${alpha})`;
+                ctx.lineWidth = 0.5 + Math.random();
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                for (let x = 0; x < this.width; x += 4) {
+                    ctx.lineTo(x, y + Math.sin(x * 0.008) * 2);
+                }
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1.5, 1.5);
+            return texture;
+        }
+
+        createVeneerNormal() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(128, 128, 255)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 3000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const nx = 128 + (Math.random() - 0.5) * 15;
+                const ny = 128 + (Math.random() - 0.5) * 15;
+                ctx.fillStyle = `rgb(${nx}, ${ny}, 252)`;
+                ctx.fillRect(x, y, 2, 1);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1.5, 1.5);
+            return texture;
+        }
+
+        createVeneerRoughness() {
+            const canvas = this.createCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgb(80, 80, 80)';
+            ctx.fillRect(0, 0, this.width, this.height);
+
+            for (let i = 0; i < 3000; i++) {
+                const x = Math.random() * this.width;
+                const y = Math.random() * this.height;
+                const value = 70 + Math.random() * 30;
+                ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
+                ctx.fillRect(x, y, 3, 3);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1.5, 1.5);
+            return texture;
+        }
+
+        // =====================================================
+        // PAINTED SURFACE TEXTURE (with selected color)
+        // =====================================================
+        createPaintedTextures(colorHex) {
+            const diffuse = this.createPaintedDiffuse(colorHex);
+            const normal = this.createPaintedNormal();
+            const roughness = this.createPaintedRoughness();
+            return { diffuse, normal, roughness };
         }
 
         hexToRgb(hex) {
@@ -359,23 +709,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return { r, g, b };
         }
 
-        createDiffuse(colorHex) {
+        createPaintedDiffuse(colorHex) {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
             const rgb = this.hexToRgb(colorHex);
 
-            // Base color with subtle variation
             const gradient = ctx.createRadialGradient(
                 this.width / 2, this.height / 2, 0,
                 this.width / 2, this.height / 2, this.width * 0.7
             );
             
-            const lighterR = Math.min(255, rgb.r + 15);
-            const lighterG = Math.min(255, rgb.g + 15);
-            const lighterB = Math.min(255, rgb.b + 15);
-            const darkerR = Math.max(0, rgb.r - 10);
-            const darkerG = Math.max(0, rgb.g - 10);
-            const darkerB = Math.max(0, rgb.b - 10);
+            const lighterR = Math.min(255, rgb.r + 12);
+            const lighterG = Math.min(255, rgb.g + 12);
+            const lighterB = Math.min(255, rgb.b + 12);
+            const darkerR = Math.max(0, rgb.r - 8);
+            const darkerG = Math.max(0, rgb.g - 8);
+            const darkerB = Math.max(0, rgb.b - 8);
             
             gradient.addColorStop(0, `rgb(${lighterR}, ${lighterG}, ${lighterB})`);
             gradient.addColorStop(0.5, `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
@@ -384,16 +733,16 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Subtle paint texture (orange peel effect for spray paint)
-            for (let i = 0; i < 6000; i++) {
+            // Orange peel texture for spray paint
+            for (let i = 0; i < 8000; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
                 const size = Math.random() * 2.5 + 0.5;
-                const brightness = Math.random() * 16 - 8;
+                const brightness = Math.random() * 14 - 7;
                 const r = Math.min(255, Math.max(0, rgb.r + brightness));
                 const g = Math.min(255, Math.max(0, rgb.g + brightness));
                 const b = Math.min(255, Math.max(0, rgb.b + brightness));
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.4)`;
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, Math.PI * 2);
                 ctx.fill();
@@ -405,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return texture;
         }
 
-        createNormal() {
+        createPaintedNormal() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
@@ -413,17 +762,15 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillRect(0, 0, this.width, this.height);
 
             // Subtle orange peel bumps
-            for (let i = 0; i < 4000; i++) {
+            for (let i = 0; i < 5000; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
-                const size = Math.random() * 3 + 1;
-                
+                const size = Math.random() * 3.5 + 1;
                 const angle = Math.random() * Math.PI * 2;
-                const strength = Math.random() * 15;
+                const strength = Math.random() * 18;
                 const nx = 128 + Math.cos(angle) * strength;
                 const ny = 128 + Math.sin(angle) * strength;
-                
-                ctx.fillStyle = `rgb(${nx}, ${ny}, 252)`;
+                ctx.fillStyle = `rgb(${nx}, ${ny}, 250)`;
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, Math.PI * 2);
                 ctx.fill();
@@ -435,21 +782,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return texture;
         }
 
-        createRoughness() {
+        createPaintedRoughness() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
-            // 25% sheen = roughness around 0.75 (lighter = rougher in our map)
-            // Value ~190 for 25% sheen
+            // 25% sheen = ~75% roughness
             ctx.fillStyle = 'rgb(190, 190, 190)';
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Slight variation
-            for (let i = 0; i < 3000; i++) {
+            for (let i = 0; i < 4000; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
                 const size = Math.random() * 3 + 1;
-                const value = 180 + Math.random() * 20;
+                const value = 175 + Math.random() * 30;
                 ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -461,13 +806,134 @@ document.addEventListener('DOMContentLoaded', function() {
             texture.wrapT = THREE.RepeatWrapping;
             return texture;
         }
+    }
 
-        createTextures(colorHex) {
-            return {
-                diffuse: this.createDiffuse(colorHex),
-                normal: this.createNormal(),
-                roughness: this.createRoughness()
-            };
+    // =========================================================
+    // ENVIRONMENT MAP GENERATOR
+    // =========================================================
+    class EnvironmentGenerator {
+        static createStudioEnvironment(renderer) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // Studio gradient - subtle warm/cool
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.2, '#f8f8f8');
+            gradient.addColorStop(0.5, '#f0f0f0');
+            gradient.addColorStop(0.8, '#e8e8e8');
+            gradient.addColorStop(1, '#e0e0e0');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Soft light spots
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height * 0.6;
+                const radius = 40 + Math.random() * 80;
+                
+                const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                spotGradient.addColorStop(0, `rgba(255, 255, 255, ${0.15 + Math.random() * 0.1})`);
+                spotGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = spotGradient;
+                ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+            const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+            pmremGenerator.dispose();
+            
+            return envMap;
+        }
+    }
+
+    // =========================================================
+    // MATERIAL FACTORY (with caching)
+    // =========================================================
+    class MaterialFactory {
+        constructor(textureGenerator, envMap) {
+            this.textureGenerator = textureGenerator;
+            this.envMap = envMap;
+            this.materialCache = {};
+        }
+
+        getWoodMaterial(type) {
+            const cacheKey = `wood_${type}`;
+            if (this.materialCache[cacheKey]) {
+                return this.materialCache[cacheKey];
+            }
+
+            let textures;
+            switch (type) {
+                case 'Timber':
+                    textures = this.textureGenerator.createTimberTextures();
+                    break;
+                case 'Veneer':
+                    textures = this.textureGenerator.createVeneerTextures();
+                    break;
+                case 'Flat':
+                case 'Shaker':
+                case 'Door frame':
+                default:
+                    textures = this.textureGenerator.createSapeleTextures();
+            }
+
+            const material = new THREE.MeshStandardMaterial({
+                map: textures.diffuse,
+                normalMap: textures.normal,
+                normalScale: new THREE.Vector2(0.5, 0.5),
+                roughnessMap: textures.roughness,
+                roughness: 0.7,
+                metalness: 0.0,
+                envMap: this.envMap,
+                envMapIntensity: 0.4
+            });
+
+            this.materialCache[cacheKey] = material;
+            return material;
+        }
+
+        getPaintedMaterial(colorHex) {
+            const cacheKey = `paint_${colorHex}`;
+            if (this.materialCache[cacheKey]) {
+                return this.materialCache[cacheKey];
+            }
+
+            const textures = this.textureGenerator.createPaintedTextures(colorHex);
+
+            const material = new THREE.MeshStandardMaterial({
+                map: textures.diffuse,
+                normalMap: textures.normal,
+                normalScale: new THREE.Vector2(0.25, 0.25),
+                roughnessMap: textures.roughness,
+                roughness: 0.75, // 25% sheen
+                metalness: 0.02,
+                envMap: this.envMap,
+                envMapIntensity: 0.5
+            });
+
+            this.materialCache[cacheKey] = material;
+            return material;
+        }
+
+        clearPaintCache() {
+            // Clear only paint materials when color changes
+            Object.keys(this.materialCache).forEach(key => {
+                if (key.startsWith('paint_')) {
+                    delete this.materialCache[key];
+                }
+            });
+        }
+
+        clearAllCache() {
+            this.materialCache = {};
         }
     }
 
@@ -475,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOOR FRAME BUILDER (П shape)
     // =========================================================
     class DoorFrameBuilder {
-        constructor(width, height, thickness, frameWidth = 0.08) {
+        constructor(width, height, thickness, frameWidth = 0.1) {
             this.width = width;
             this.height = height;
             this.thickness = thickness;
@@ -487,73 +953,54 @@ document.addEventListener('DOMContentLoaded', function() {
             const meshes = [];
 
             // Top horizontal piece
-            const topPiece = this.createFramePiece(
-                this.width, 
-                this.frameWidth, 
-                this.thickness,
-                woodMaterial,
-                paintMaterial,
-                selectedFaces
-            );
-            topPiece.mesh.position.set(0, this.height - this.frameWidth / 2, 0);
-            group.add(topPiece.mesh);
-            meshes.push(topPiece);
+            const topMaterials = this.createFaceMaterials(woodMaterial, paintMaterial, selectedFaces);
+            const topGeo = new THREE.BoxGeometry(this.width, this.frameWidth, this.thickness);
+            const topMesh = new THREE.Mesh(topGeo, topMaterials);
+            topMesh.position.set(0, this.height - this.frameWidth / 2, 0);
+            topMesh.castShadow = true;
+            topMesh.receiveShadow = true;
+            topMesh.userData.faceMapping = { 0: 'right', 1: 'left', 2: 'top', 3: 'bottom', 4: 'front', 5: 'back' };
+            group.add(topMesh);
+            meshes.push({ mesh: topMesh, faces: Object.keys(selectedFaces) });
 
             // Left vertical piece
-            const leftPiece = this.createFramePiece(
-                this.frameWidth,
-                this.height - this.frameWidth,
-                this.thickness,
-                woodMaterial,
-                paintMaterial,
-                selectedFaces
-            );
-            leftPiece.mesh.position.set(-this.width / 2 + this.frameWidth / 2, (this.height - this.frameWidth) / 2, 0);
-            group.add(leftPiece.mesh);
-            meshes.push(leftPiece);
+            const leftMaterials = this.createFaceMaterials(woodMaterial, paintMaterial, selectedFaces);
+            const sideGeo = new THREE.BoxGeometry(this.frameWidth, this.height - this.frameWidth, this.thickness);
+            const leftMesh = new THREE.Mesh(sideGeo, leftMaterials);
+            leftMesh.position.set(-this.width / 2 + this.frameWidth / 2, (this.height - this.frameWidth) / 2, 0);
+            leftMesh.castShadow = true;
+            leftMesh.receiveShadow = true;
+            leftMesh.userData.faceMapping = { 0: 'right', 1: 'left', 2: 'top', 3: 'bottom', 4: 'front', 5: 'back' };
+            group.add(leftMesh);
+            meshes.push({ mesh: leftMesh, faces: Object.keys(selectedFaces) });
 
             // Right vertical piece
-            const rightPiece = this.createFramePiece(
-                this.frameWidth,
-                this.height - this.frameWidth,
-                this.thickness,
-                woodMaterial,
-                paintMaterial,
-                selectedFaces
-            );
-            rightPiece.mesh.position.set(this.width / 2 - this.frameWidth / 2, (this.height - this.frameWidth) / 2, 0);
-            group.add(rightPiece.mesh);
-            meshes.push(rightPiece);
+            const rightMaterials = this.createFaceMaterials(woodMaterial, paintMaterial, selectedFaces);
+            const rightMesh = new THREE.Mesh(sideGeo, rightMaterials);
+            rightMesh.position.set(this.width / 2 - this.frameWidth / 2, (this.height - this.frameWidth) / 2, 0);
+            rightMesh.castShadow = true;
+            rightMesh.receiveShadow = true;
+            rightMesh.userData.faceMapping = { 0: 'right', 1: 'left', 2: 'top', 3: 'bottom', 4: 'front', 5: 'back' };
+            group.add(rightMesh);
+            meshes.push({ mesh: rightMesh, faces: Object.keys(selectedFaces) });
 
             return { group, meshes };
         }
 
-        createFramePiece(w, h, d, woodMaterial, paintMaterial, selectedFaces) {
-            // Materials for each face: +X, -X, +Y, -Y, +Z, -Z
-            const materials = [
-                selectedFaces.right ? paintMaterial : woodMaterial,   // +X right
-                selectedFaces.left ? paintMaterial : woodMaterial,    // -X left
-                selectedFaces.top ? paintMaterial : woodMaterial,     // +Y top
-                selectedFaces.bottom ? paintMaterial : woodMaterial,  // -Y bottom
-                selectedFaces.front ? paintMaterial : woodMaterial,   // +Z front
-                selectedFaces.back ? paintMaterial : woodMaterial     // -Z back
+        createFaceMaterials(woodMaterial, paintMaterial, selectedFaces) {
+            return [
+                selectedFaces.right ? paintMaterial : woodMaterial,
+                selectedFaces.left ? paintMaterial : woodMaterial,
+                selectedFaces.top ? paintMaterial : woodMaterial,
+                selectedFaces.bottom ? paintMaterial : woodMaterial,
+                selectedFaces.front ? paintMaterial : woodMaterial,
+                selectedFaces.back ? paintMaterial : woodMaterial
             ];
-
-            const geometry = new THREE.BoxGeometry(w, h, d);
-            const mesh = new THREE.Mesh(geometry, materials);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-
-            mesh.userData.faceMapping = {
-                0: 'right', 1: 'left', 2: 'top', 3: 'bottom', 4: 'front', 5: 'back'
-            };
-
-            return { mesh, faces: Object.keys(selectedFaces) };
         }
     }
 
     // =========================================================
-    // SHAKER DOOR BUILDER
+    // SHAKER DOOR BUILDER (with recess and bevels)
     // =========================================================
     class ShakerDoorBuilder {
         constructor(width, height, thickness, frameWidth = 0.08, recessDepth = 0.015) {
@@ -568,73 +1015,155 @@ document.addEventListener('DOMContentLoaded', function() {
             const group = new THREE.Group();
             const meshes = [];
 
-            // Back panel
-            const backThickness = this.thickness - this.recessDepth;
-            const backGeo = new THREE.BoxGeometry(this.width, this.height, backThickness);
-            const backMat = selectedFaces.back ? paintMaterial : woodMaterial;
-            const backPanel = new THREE.Mesh(backGeo, backMat);
-            backPanel.position.z = -this.recessDepth / 2;
-            backPanel.castShadow = true;
-            backPanel.receiveShadow = true;
+            // Main back panel
+            const backPanelThickness = this.thickness - this.recessDepth;
+            const backPanel = this.createBackPanel(backPanelThickness, woodMaterial, paintMaterial, selectedFaces);
             group.add(backPanel);
             meshes.push({ mesh: backPanel, faces: ['back'] });
 
             // Recessed center panel
-            const innerW = this.width - this.frameWidth * 2;
-            const innerH = this.height - this.frameWidth * 2;
-            const centerGeo = new THREE.BoxGeometry(innerW, innerH, 0.005);
-            const centerMat = selectedFaces.front ? paintMaterial : woodMaterial;
-            const centerPanel = new THREE.Mesh(centerGeo, centerMat);
-            centerPanel.position.z = this.thickness / 2 - this.recessDepth - 0.0025;
-            centerPanel.castShadow = true;
+            const centerPanel = this.createCenterPanel(woodMaterial, paintMaterial, selectedFaces);
             group.add(centerPanel);
             meshes.push({ mesh: centerPanel, faces: ['front'] });
 
             // Frame pieces
-            const frameMat = selectedFaces.front ? paintMaterial : woodMaterial;
-            const frameDepth = this.recessDepth + 0.005;
+            const framePieces = this.createFrame(woodMaterial, paintMaterial, selectedFaces);
+            framePieces.forEach(piece => {
+                group.add(piece.mesh);
+                meshes.push(piece);
+            });
 
-            // Top frame
-            const topGeo = new THREE.BoxGeometry(this.width, this.frameWidth, frameDepth);
-            const topFrame = new THREE.Mesh(topGeo, frameMat);
-            topFrame.position.set(0, this.height / 2 - this.frameWidth / 2, this.thickness / 2 - frameDepth / 2);
-            topFrame.castShadow = true;
-            group.add(topFrame);
-            meshes.push({ mesh: topFrame, faces: ['front', 'top'] });
-
-            // Bottom frame
-            const bottomFrame = new THREE.Mesh(topGeo, frameMat);
-            bottomFrame.position.set(0, -this.height / 2 + this.frameWidth / 2, this.thickness / 2 - frameDepth / 2);
-            bottomFrame.castShadow = true;
-            group.add(bottomFrame);
-            meshes.push({ mesh: bottomFrame, faces: ['front', 'bottom'] });
-
-            // Left frame
-            const sideGeo = new THREE.BoxGeometry(this.frameWidth, innerH, frameDepth);
-            const leftFrame = new THREE.Mesh(sideGeo, frameMat);
-            leftFrame.position.set(-this.width / 2 + this.frameWidth / 2, 0, this.thickness / 2 - frameDepth / 2);
-            leftFrame.castShadow = true;
-            group.add(leftFrame);
-            meshes.push({ mesh: leftFrame, faces: ['front', 'left'] });
-
-            // Right frame
-            const rightFrame = new THREE.Mesh(sideGeo, frameMat);
-            rightFrame.position.set(this.width / 2 - this.frameWidth / 2, 0, this.thickness / 2 - frameDepth / 2);
-            rightFrame.castShadow = true;
-            group.add(rightFrame);
-            meshes.push({ mesh: rightFrame, faces: ['front', 'right'] });
-
-            // Side edges with proper materials
-            const edgeMaterials = [
-                selectedFaces.right ? paintMaterial : woodMaterial,
-                selectedFaces.left ? paintMaterial : woodMaterial,
-                selectedFaces.top ? paintMaterial : woodMaterial,
-                selectedFaces.bottom ? paintMaterial : woodMaterial,
-                selectedFaces.front ? paintMaterial : woodMaterial,
-                selectedFaces.back ? paintMaterial : woodMaterial
-            ];
+            // Inner bevels
+            const bevelPieces = this.createInnerBevels(woodMaterial, paintMaterial, selectedFaces);
+            bevelPieces.forEach(piece => {
+                group.add(piece.mesh);
+                meshes.push(piece);
+            });
 
             return { group, meshes };
+        }
+
+        createBackPanel(thickness, woodMaterial, paintMaterial, selectedFaces) {
+            const geometry = new THREE.BoxGeometry(this.width, this.height, thickness);
+            const material = selectedFaces.back ? paintMaterial : woodMaterial;
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.z = -thickness / 2;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        createCenterPanel(woodMaterial, paintMaterial, selectedFaces) {
+            const innerWidth = this.width - this.frameWidth * 2;
+            const innerHeight = this.height - this.frameWidth * 2;
+            const panelThickness = 0.005;
+
+            const geometry = new THREE.BoxGeometry(innerWidth, innerHeight, panelThickness);
+            const material = selectedFaces.front ? paintMaterial : woodMaterial;
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.z = this.thickness / 2 - this.recessDepth;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        createFrame(woodMaterial, paintMaterial, selectedFaces) {
+            const pieces = [];
+            const frameThickness = this.recessDepth + 0.005;
+            const frameMaterial = selectedFaces.front ? paintMaterial : woodMaterial;
+
+            // Top frame
+            const topGeo = new THREE.BoxGeometry(this.width, this.frameWidth, frameThickness);
+            const topMesh = new THREE.Mesh(topGeo, frameMaterial);
+            topMesh.position.set(0, this.height / 2 - this.frameWidth / 2, this.thickness / 2 - frameThickness / 2);
+            topMesh.castShadow = true;
+            pieces.push({ mesh: topMesh, faces: ['front', 'top'] });
+
+            // Bottom frame
+            const bottomMesh = new THREE.Mesh(topGeo, frameMaterial);
+            bottomMesh.position.set(0, -this.height / 2 + this.frameWidth / 2, this.thickness / 2 - frameThickness / 2);
+            bottomMesh.castShadow = true;
+            pieces.push({ mesh: bottomMesh, faces: ['front', 'bottom'] });
+
+            // Left frame
+            const innerH = this.height - this.frameWidth * 2;
+            const sideGeo = new THREE.BoxGeometry(this.frameWidth, innerH, frameThickness);
+            const leftMesh = new THREE.Mesh(sideGeo, frameMaterial);
+            leftMesh.position.set(-this.width / 2 + this.frameWidth / 2, 0, this.thickness / 2 - frameThickness / 2);
+            leftMesh.castShadow = true;
+            pieces.push({ mesh: leftMesh, faces: ['front', 'left'] });
+
+            // Right frame
+            const rightMesh = new THREE.Mesh(sideGeo, frameMaterial);
+            rightMesh.position.set(this.width / 2 - this.frameWidth / 2, 0, this.thickness / 2 - frameThickness / 2);
+            rightMesh.castShadow = true;
+            pieces.push({ mesh: rightMesh, faces: ['front', 'right'] });
+
+            return pieces;
+        }
+
+        createInnerBevels(woodMaterial, paintMaterial, selectedFaces) {
+            const pieces = [];
+            const bevelWidth = 0.015;
+            const bevelDepth = this.recessDepth;
+            const material = selectedFaces.front ? paintMaterial : woodMaterial;
+            const innerWidth = this.width - this.frameWidth * 2;
+            const innerHeight = this.height - this.frameWidth * 2;
+
+            // Top inner bevel
+            const topBevelShape = new THREE.Shape();
+            topBevelShape.moveTo(-innerWidth / 2, 0);
+            topBevelShape.lineTo(innerWidth / 2, 0);
+            topBevelShape.lineTo(innerWidth / 2 - bevelWidth, -bevelWidth);
+            topBevelShape.lineTo(-innerWidth / 2 + bevelWidth, -bevelWidth);
+            topBevelShape.closePath();
+
+            const bevelGeo = new THREE.ExtrudeGeometry(topBevelShape, {
+                depth: bevelDepth,
+                bevelEnabled: false
+            });
+            
+            const topBevel = new THREE.Mesh(bevelGeo, material);
+            topBevel.rotation.x = Math.PI / 2;
+            topBevel.position.set(0, innerHeight / 2, this.thickness / 2 - this.recessDepth);
+            topBevel.castShadow = true;
+            pieces.push({ mesh: topBevel, faces: ['front'] });
+
+            // Bottom inner bevel
+            const bottomBevel = new THREE.Mesh(bevelGeo, material);
+            bottomBevel.rotation.x = -Math.PI / 2;
+            bottomBevel.rotation.z = Math.PI;
+            bottomBevel.position.set(0, -innerHeight / 2, this.thickness / 2 - this.recessDepth);
+            bottomBevel.castShadow = true;
+            pieces.push({ mesh: bottomBevel, faces: ['front'] });
+
+            // Left inner bevel
+            const leftBevelShape = new THREE.Shape();
+            leftBevelShape.moveTo(0, -innerHeight / 2 + bevelWidth);
+            leftBevelShape.lineTo(0, innerHeight / 2 - bevelWidth);
+            leftBevelShape.lineTo(bevelWidth, innerHeight / 2 - bevelWidth * 2);
+            leftBevelShape.lineTo(bevelWidth, -innerHeight / 2 + bevelWidth * 2);
+            leftBevelShape.closePath();
+
+            const leftBevelGeo = new THREE.ExtrudeGeometry(leftBevelShape, {
+                depth: bevelDepth,
+                bevelEnabled: false
+            });
+            
+            const leftBevel = new THREE.Mesh(leftBevelGeo, material);
+            leftBevel.rotation.y = -Math.PI / 2;
+            leftBevel.position.set(-innerWidth / 2, 0, this.thickness / 2 - this.recessDepth + bevelDepth);
+            leftBevel.castShadow = true;
+            pieces.push({ mesh: leftBevel, faces: ['front'] });
+
+            // Right inner bevel
+            const rightBevel = new THREE.Mesh(leftBevelGeo, material);
+            rightBevel.rotation.y = Math.PI / 2;
+            rightBevel.position.set(innerWidth / 2, 0, this.thickness / 2 - this.recessDepth);
+            rightBevel.castShadow = true;
+            pieces.push({ mesh: rightBevel, faces: ['front'] });
+
+            return pieces;
         }
     }
 
@@ -680,17 +1209,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // THREE.JS INITIALIZATION
     // =========================================================
-    let sapeleGenerator, paintedGenerator;
+    let textureGenerator, materialFactory, envMap;
 
     function initThreeJS() {
-        // Scene with white background
+        // Scene - white background
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
 
         // Camera
         const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
         camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-        camera.position.set(2, 1.5, 3);
+        camera.position.set(2.5, 1.8, 3.5);
 
         // Renderer
         renderer = new THREE.WebGLRenderer({ 
@@ -703,26 +1232,30 @@ document.addEventListener('DOMContentLoaded', function() {
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.0;
+        renderer.toneMappingExposure = 1.1;
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.08;
-        controls.minDistance = 1;
+        controls.minDistance = 1.2;
         controls.maxDistance = 8;
         controls.maxPolarAngle = Math.PI * 0.85;
-        controls.target.set(0, 0.6, 0);
+        controls.target.set(0, 0.5, 0);
 
-        // Texture generators
-        sapeleGenerator = new SapeleTextureGenerator(512, 512);
-        paintedGenerator = new PaintedTextureGenerator(512, 512);
+        // Environment map
+        envMap = EnvironmentGenerator.createStudioEnvironment(renderer);
+        scene.environment = envMap;
+
+        // Texture generator & material factory
+        textureGenerator = new ProceduralTextureGenerator(512, 512);
+        materialFactory = new MaterialFactory(textureGenerator, envMap);
 
         // Lighting
         setupLighting();
 
-        // Subtle floor (no grid)
+        // Floor (shadow only)
         createFloor();
 
         // Create initial model
@@ -739,45 +1272,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupLighting() {
         // Key light - warm
-        const keyLight = new THREE.DirectionalLight(0xfffaf0, 1.2);
-        keyLight.position.set(4, 8, 6);
+        const keyLight = new THREE.DirectionalLight(0xfffaf5, 1.2);
+        keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         keyLight.shadow.camera.near = 0.5;
-        keyLight.shadow.camera.far = 20;
-        keyLight.shadow.camera.left = -4;
-        keyLight.shadow.camera.right = 4;
-        keyLight.shadow.camera.top = 4;
-        keyLight.shadow.camera.bottom = -4;
+        keyLight.shadow.camera.far = 25;
+        keyLight.shadow.camera.left = -5;
+        keyLight.shadow.camera.right = 5;
+        keyLight.shadow.camera.top = 5;
+        keyLight.shadow.camera.bottom = -5;
         keyLight.shadow.bias = -0.0003;
         scene.add(keyLight);
 
         // Fill light - cool
         const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.5);
-        fillLight.position.set(-3, 5, -2);
+        fillLight.position.set(-4, 6, -3);
         scene.add(fillLight);
 
-        // Back/rim light
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
-        rimLight.position.set(0, 4, -5);
+        // Rim light
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        rimLight.position.set(0, 5, -6);
         scene.add(rimLight);
 
         // Ambient
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambientLight);
 
-        // Hemisphere for natural fill
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0e0e0, 0.4);
+        // Hemisphere
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xf0f0f0, 0.4);
         scene.add(hemiLight);
     }
 
     function createFloor() {
-        // Subtle shadow-catching floor
+        // Shadow-catching floor
         const floorGeometry = new THREE.PlaneGeometry(15, 15);
-        const floorMaterial = new THREE.ShadowMaterial({
-            opacity: 0.15
-        });
+        const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.12 });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = 0;
@@ -808,13 +1339,6 @@ document.addEventListener('DOMContentLoaded', function() {
             scene.remove(doorGroup);
             doorGroup.traverse((child) => {
                 if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(m => m.dispose());
-                    } else {
-                        child.material.dispose();
-                    }
-                }
             });
         }
 
@@ -827,30 +1351,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const elementType = elementTypeSelect.value || 'Flat';
 
-        // Get paint color
+        // Get materials
         const paintColor = getSelectedPaintColor();
-
-        // Create materials
-        const sapeleTextures = sapeleGenerator.createTextures();
-        const paintedTextures = paintedGenerator.createTextures(paintColor);
-
-        const woodMaterial = new THREE.MeshStandardMaterial({
-            map: sapeleTextures.diffuse,
-            normalMap: sapeleTextures.normal,
-            normalScale: new THREE.Vector2(0.5, 0.5),
-            roughnessMap: sapeleTextures.roughness,
-            roughness: 0.7,
-            metalness: 0.0
-        });
-
-        const paintMaterial = new THREE.MeshStandardMaterial({
-            map: paintedTextures.diffuse,
-            normalMap: paintedTextures.normal,
-            normalScale: new THREE.Vector2(0.2, 0.2),
-            roughnessMap: paintedTextures.roughness,
-            roughness: 0.75, // 25% sheen
-            metalness: 0.02
-        });
+        materialFactory.clearPaintCache();
+        const woodMaterial = materialFactory.getWoodMaterial(elementType);
+        const paintMaterial = materialFactory.getPaintedMaterial(paintColor);
 
         const selectedFaces = {
             front: faces.front.selected,
@@ -872,6 +1377,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const shakerBuilder = new ShakerDoorBuilder(W, H, T);
                 result = shakerBuilder.build(woodMaterial, paintMaterial, selectedFaces);
                 break;
+            case 'Timber':
+            case 'Veneer':
             default:
                 const flatBuilder = new FlatPanelBuilder(W, H, T);
                 result = flatBuilder.build(woodMaterial, paintMaterial, selectedFaces);
@@ -879,9 +1386,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         doorGroup = result.group;
         
-        // Position at 20% from bottom of view
-        // Canvas height 600px, model should be in lower portion
-        doorGroup.position.y = H * 0.2;
+        // Position at 20% from bottom
+        doorGroup.position.y = H * 0.1;
 
         result.meshes.forEach(item => {
             clickableMeshes.push(item.mesh);
@@ -889,8 +1395,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         scene.add(doorGroup);
 
-        // Adjust camera target based on model
-        controls.target.set(0, H * 0.5, 0);
+        // Adjust camera target
+        controls.target.set(0, H * 0.4, 0);
         controls.update();
     }
 
@@ -1208,10 +1714,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // EVENT LISTENERS
     // =========================================================
     colourStandardRadios.forEach(radio => {
-        radio.addEventListener('change', updateRalCodeVisibility);
+        radio.addEventListener('change', () => {
+            updateRalCodeVisibility();
+            createDoor();
+        });
     });
 
-    // RAL code change - rebuild door with new color
     ralCodeInput.addEventListener('input', function() {
         createDoor();
     });
@@ -1240,6 +1748,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     elementTypeSelect.addEventListener('change', function() {
+        materialFactory.clearAllCache();
         createDoor();
         updateCalculations();
         this.classList.remove('input-error');
