@@ -819,13 +819,21 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Bright light spots for reflections
+            // Light spots from all directions (spread across width for 360 coverage)
             const spots = [
-                { x: canvas.width * 0.3, y: canvas.height * 0.2, radius: 120, intensity: 0.7 },
-                { x: canvas.width * 0.7, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
-                { x: canvas.width * 0.5, y: canvas.height * 0.1, radius: 100, intensity: 0.6 },
-                { x: canvas.width * 0.2, y: canvas.height * 0.35, radius: 60, intensity: 0.3 },
-                { x: canvas.width * 0.8, y: canvas.height * 0.3, radius: 70, intensity: 0.35 }
+                // Front lights
+                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.6 },
+                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
+                // Right side lights
+                { x: canvas.width * 0.5, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                // Back lights
+                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.5 },
+                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
+                // Left side lights
+                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                // Top center
+                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 120, intensity: 0.65 }
             ];
             
             spots.forEach(spot => {
@@ -1264,12 +1272,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Events
         window.addEventListener('resize', onWindowResize);
-        threeCanvas.addEventListener('click', onCanvasClick);
+        threeCanvas.addEventListener('dblclick', onCanvasClick);
         threeCanvas.addEventListener('mousemove', onCanvasMouseMove);
     }
 
     function setupLighting() {
-        // Key light - reduced intensity
+        // Key light - front
         const keyLight = new THREE.DirectionalLight(0xfff8f0, 0.7);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
@@ -1284,27 +1292,37 @@ document.addEventListener('DOMContentLoaded', function() {
         keyLight.shadow.bias = -0.0003;
         scene.add(keyLight);
 
-        // Fill light - subtle
-        const fillLight = new THREE.DirectionalLight(0xe0e8ff, 0.25);
-        fillLight.position.set(-4, 6, -3);
-        scene.add(fillLight);
+        // Back light - for back face
+        const backLight = new THREE.DirectionalLight(0xf0f0ff, 0.5);
+        backLight.position.set(-3, 6, -8);
+        scene.add(backLight);
 
-        // Rim light for edge highlight / reflection effect
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
-        rimLight.position.set(-2, 3, -4);
-        scene.add(rimLight);
+        // Left side light
+        const leftLight = new THREE.DirectionalLight(0xfff5f0, 0.45);
+        leftLight.position.set(-8, 5, 2);
+        scene.add(leftLight);
 
-        // Top highlight for reflection
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        topLight.position.set(0, 8, 0);
+        // Right side light
+        const rightLight = new THREE.DirectionalLight(0xf0f5ff, 0.45);
+        rightLight.position.set(8, 5, 2);
+        scene.add(rightLight);
+
+        // Top light
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        topLight.position.set(0, 10, 0);
         scene.add(topLight);
 
-        // Ambient - reduced
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+        // Bottom fill light
+        const bottomLight = new THREE.DirectionalLight(0xe0e0e0, 0.2);
+        bottomLight.position.set(0, -5, 3);
+        scene.add(bottomLight);
+
+        // Ambient - subtle
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.35);
         scene.add(ambientLight);
 
-        // Hemisphere - subtle
-        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.3);
+        // Hemisphere
+        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.25);
         scene.add(hemiLight);
     }
 

@@ -306,6 +306,14 @@ input::placeholder {
     cursor: grabbing;
 }
 
+.canvas-instruction {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
 .svg-diagram-wrapper {
     width: 100%;
     height: 260px;
