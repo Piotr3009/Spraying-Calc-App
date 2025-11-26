@@ -1531,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         doorGroup = result.group;
         
         // Position at 30% from bottom (raised 10%)
-        doorGroup.position.y = H * 0.2;
+        doorGroup.position.y = H * 0.4;
 
         result.meshes.forEach(item => {
             clickableMeshes.push(item.mesh);
