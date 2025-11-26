@@ -853,40 +853,35 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             
-            // Lighter studio gradient
+            // Darker studio gradient to preserve colors
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#6a6a6a');
-            gradient.addColorStop(0.3, '#5a5a5a');
-            gradient.addColorStop(0.5, '#4a4a4a');
-            gradient.addColorStop(0.7, '#3d3d3d');
-            gradient.addColorStop(1, '#2d2d2d');
+            gradient.addColorStop(0, '#4a4a4a');
+            gradient.addColorStop(0.3, '#3a3a3a');
+            gradient.addColorStop(0.5, '#2d2d2d');
+            gradient.addColorStop(0.7, '#252525');
+            gradient.addColorStop(1, '#1a1a1a');
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Light spots - BRIGHTER for mirror reflections
+            // Light spots - REDUCED intensity
             const spots = [
-                // Front lights
-                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.7 },
-                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.6 },
-                // Right side light - closer to front (~20 degrees), lower
-                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.75 },
-                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.65 },
-                // Back lights
-                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.55 },
-                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
-                // Left side lights
-                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
-                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
-                // Top center - bright for ceiling reflection
-                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 150, intensity: 0.8 }
+                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.4 },
+                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.35 },
+                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.45 },
+                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.4 },
+                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.35 },
+                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.35 },
+                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
+                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
+                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 150, intensity: 0.5 }
             ];
             
             spots.forEach(spot => {
                 const spotGradient = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.radius);
                 spotGradient.addColorStop(0, `rgba(255, 255, 255, ${spot.intensity})`);
-                spotGradient.addColorStop(0.4, `rgba(220, 220, 220, ${spot.intensity * 0.5})`);
-                spotGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
+                spotGradient.addColorStop(0.4, `rgba(200, 200, 200, ${spot.intensity * 0.4})`);
+                spotGradient.addColorStop(1, 'rgba(80, 80, 80, 0)');
                 ctx.fillStyle = spotGradient;
                 ctx.fillRect(spot.x - spot.radius, spot.y - spot.radius, spot.radius * 2, spot.radius * 2);
             });
@@ -960,8 +955,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const textures = this.textureGenerator.createPaintedTextures(colorHex);
             
-            // Higher sheen = higher envMapIntensity for more reflection
-            const envIntensity = 0.2 + (1 - roughness) * 0.8; // 0.2 for matt, 1.0 for mirror
+            // Lower envMapIntensity to preserve dark colors
+            const envIntensity = 0.1 + (1 - roughness) * 0.3; // 0.1 for matt, 0.4 for mirror
 
             const material = new THREE.MeshStandardMaterial({
                 map: textures.diffuse,
@@ -969,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 normalScale: new THREE.Vector2(0.1, 0.1),
                 roughnessMap: null, // Use direct roughness value
                 roughness: roughness,
-                metalness: roughness < 0.1 ? 0.1 : 0.0, // Slight metalness for mirror effect
+                metalness: roughness < 0.1 ? 0.05 : 0.0, // Less metalness
                 envMap: this.envMap,
                 envMapIntensity: envIntensity
             });
@@ -1287,7 +1282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.9;
+        renderer.toneMappingExposure = 0.7;
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1329,8 +1324,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove old helpers
         removeLightHelpers();
 
-        // 1. KEY LIGHT - Front top right (main light) - DIMMED
-        const keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        // 1. KEY LIGHT - Front top right (main light) - VERY DIM
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.12);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -1338,72 +1333,72 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(keyLight);
         createLightHelper(keyLight.position, 0xffff00, '1. KEY (front-top-right)');
 
-        // 2. FILL LIGHT - Front left - DIMMED
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        // 2. FILL LIGHT - Front left - VERY DIM
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.06);
         fillLight.position.set(-5, 6, 5);
         scene.add(fillLight);
         createLightHelper(fillLight.position, 0x00ff00, '2. FILL (front-left)');
 
-        // 3. BACK LIGHT - Behind object - DIMMED
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        // 3. BACK LIGHT - Behind object - VERY DIM
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.06);
         backLight.position.set(-3, 6, -8);
         scene.add(backLight);
         createLightHelper(backLight.position, 0x0000ff, '3. BACK (behind)');
 
-        // 4. LEFT SIDE LIGHT - DIMMED
-        const leftLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        // 4. LEFT SIDE LIGHT - VERY DIM
+        const leftLight = new THREE.DirectionalLight(0xffffff, 0.06);
         leftLight.position.set(-8, 4, 0);
         scene.add(leftLight);
         createLightHelper(leftLight.position, 0xff00ff, '4. LEFT SIDE');
 
-        // 5. RIGHT SIDE LIGHT - Lower, for reflection - DIMMED
-        const rightLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        // 5. RIGHT SIDE LIGHT - Lower, for reflection - VERY DIM
+        const rightLight = new THREE.DirectionalLight(0xffffff, 0.08);
         rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
         createLightHelper(rightLight.position, 0x00ffff, '5. RIGHT (low-front)');
 
-        // 6. TOP LIGHT - Directly above - DIMMED
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.12);
+        // 6. TOP LIGHT - Directly above - VERY DIM
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.05);
         topLight.position.set(0, 10, 0);
         scene.add(topLight);
         createLightHelper(topLight.position, 0xffa500, '6. TOP (above)');
 
-        // 7. BOTTOM FILL - From below - DIMMED
-        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.08);
+        // 7. BOTTOM FILL - From below - VERY DIM
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.03);
         bottomLight.position.set(0, -5, 3);
         scene.add(bottomLight);
         createLightHelper(bottomLight.position, 0x8b4513, '7. BOTTOM (below)');
 
-        // 8. RIM LIGHT - Back edge highlight - DIMMED
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.18);
+        // 8. RIM LIGHT - Back edge highlight - VERY DIM
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.08);
         rimLight.position.set(4, 3, -5);
         scene.add(rimLight);
         createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
 
-        // 9. LOW FRONT LIGHT - 25% height from bottom - UNCHANGED
-        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        // 9. LOW FRONT LIGHT - 25% height from bottom - REDUCED
+        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.15);
         lowFrontLight.position.set(0, 0.5, 6);
         scene.add(lowFrontLight);
         createLightHelper(lowFrontLight.position, 0x90ee90, '9. LOW FRONT (25% height)');
 
-        // Ambient - subtle fill - DIMMED
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.1);
+        // Ambient - minimal
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.05);
         scene.add(ambientLight);
 
-        // Hemisphere - sky/ground - DIMMED
-        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.08);
+        // Hemisphere - minimal
+        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.03);
         scene.add(hemiLight);
 
-        console.log('=== LIGHT POSITIONS ===');
-        console.log('1. KEY (yellow):      (5, 10, 7)   - 0.25 (dimmed)');
-        console.log('2. FILL (green):      (-5, 6, 5)   - 0.15 (dimmed)');
-        console.log('3. BACK (blue):       (-3, 6, -8)  - 0.15 (dimmed)');
-        console.log('4. LEFT (magenta):    (-8, 4, 0)   - 0.15 (dimmed)');
-        console.log('5. RIGHT (cyan):      (3, 1.5, 7)  - 0.20 (dimmed)');
-        console.log('6. TOP (orange):      (0, 10, 0)   - 0.12 (dimmed)');
-        console.log('7. BOTTOM (brown):    (0, -5, 3)   - 0.08 (dimmed)');
-        console.log('8. RIM (red):         (4, 3, -5)   - 0.18 (dimmed)');
-        console.log('9. LOW FRONT (lime):  (0, 0.5, 6)  - 0.40 (UNCHANGED)');
+        console.log('=== LIGHT POSITIONS (VERY DIM) ===');
+        console.log('1. KEY:       0.12');
+        console.log('2. FILL:      0.06');
+        console.log('3. BACK:      0.06');
+        console.log('4. LEFT:      0.06');
+        console.log('5. RIGHT:     0.08');
+        console.log('6. TOP:       0.05');
+        console.log('7. BOTTOM:    0.03');
+        console.log('8. RIM:       0.08');
+        console.log('9. LOW FRONT: 0.15');
     }
 
     // =========================================================
