@@ -174,12 +174,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // GET SHEEN LEVEL (0-100 -> roughness 1.0-0.0)
+    // Non-linear scale: 50% UI = 25% real effect
     // =========================================================
     function getSheen() {
         const sheenPercent = parseInt(sheenSlider?.value || 30);
-        // 0% sheen = 1.0 roughness (total matt)
-        // 100% sheen = 0.0 roughness (mirror)
-        return 1.0 - (sheenPercent / 100);
+        // Quadratic scale: makes lower values less glossy
+        // 0% = 1.0 roughness (matt)
+        // 50% = 0.75 roughness (like old 25%)
+        // 100% = 0.0 roughness (mirror)
+        const normalizedSheen = sheenPercent / 100;
+        const adjustedSheen = Math.pow(normalizedSheen, 2); // Square for realistic curve
+        return 1.0 - adjustedSheen;
     }
 
     // =========================================================
