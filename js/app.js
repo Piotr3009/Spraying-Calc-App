@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // PRICE TABLE CONFIGURATION
     // =========================================================
     const priceTable = {
+        "MDF": { internal: [22, 27, 32], external: [27, 33, 39] },
         "Flat": { internal: [25, 30, 35], external: [30, 36, 42] },
         "Shaker": { internal: [32, 38, 44], external: [38, 45, 52] },
         "Veneer": { internal: [28, 34, 40], external: [34, 41, 48] },
@@ -714,17 +715,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctx = canvas.getContext('2d');
             const rgb = this.hexToRgb(colorHex);
 
-            const gradient = ctx.createRadialGradient(
-                this.width / 2, this.height / 2, 0,
-                this.width / 2, this.height / 2, this.width * 0.7
-            );
+            // Smooth flat color with very subtle gradient for depth
+            const gradient = ctx.createLinearGradient(0, 0, this.width, this.height);
             
-            const lighterR = Math.min(255, rgb.r + 12);
-            const lighterG = Math.min(255, rgb.g + 12);
-            const lighterB = Math.min(255, rgb.b + 12);
-            const darkerR = Math.max(0, rgb.r - 8);
-            const darkerG = Math.max(0, rgb.g - 8);
-            const darkerB = Math.max(0, rgb.b - 8);
+            const lighterR = Math.min(255, rgb.r + 5);
+            const lighterG = Math.min(255, rgb.g + 5);
+            const lighterB = Math.min(255, rgb.b + 5);
+            const darkerR = Math.max(0, rgb.r - 3);
+            const darkerG = Math.max(0, rgb.g - 3);
+            const darkerB = Math.max(0, rgb.b - 3);
             
             gradient.addColorStop(0, `rgb(${lighterR}, ${lighterG}, ${lighterB})`);
             gradient.addColorStop(0.5, `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
@@ -733,19 +732,16 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Orange peel texture for spray paint
-            for (let i = 0; i < 8000; i++) {
+            // Very minimal noise for realism (not orange peel)
+            for (let i = 0; i < 1000; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
-                const size = Math.random() * 2.5 + 0.5;
-                const brightness = Math.random() * 14 - 7;
+                const brightness = Math.random() * 4 - 2;
                 const r = Math.min(255, Math.max(0, rgb.r + brightness));
                 const g = Math.min(255, Math.max(0, rgb.g + brightness));
                 const b = Math.min(255, Math.max(0, rgb.b + brightness));
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.1)`;
+                ctx.fillRect(x, y, 1, 1);
             }
 
             const texture = new THREE.CanvasTexture(canvas);
@@ -758,22 +754,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
+            // Almost flat normal map - very subtle variation
             ctx.fillStyle = 'rgb(128, 128, 255)';
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Subtle orange peel bumps
-            for (let i = 0; i < 5000; i++) {
+            // Minimal surface variation
+            for (let i = 0; i < 500; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
-                const size = Math.random() * 3.5 + 1;
-                const angle = Math.random() * Math.PI * 2;
-                const strength = Math.random() * 18;
-                const nx = 128 + Math.cos(angle) * strength;
-                const ny = 128 + Math.sin(angle) * strength;
-                ctx.fillStyle = `rgb(${nx}, ${ny}, 250)`;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
+                const nx = 128 + (Math.random() - 0.5) * 4;
+                const ny = 128 + (Math.random() - 0.5) * 4;
+                ctx.fillStyle = `rgb(${nx}, ${ny}, 254)`;
+                ctx.fillRect(x, y, 2, 2);
             }
 
             const texture = new THREE.CanvasTexture(canvas);
@@ -786,19 +778,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const canvas = this.createCanvas();
             const ctx = canvas.getContext('2d');
 
-            // 25% sheen = ~75% roughness
-            ctx.fillStyle = 'rgb(190, 190, 190)';
+            // Smooth satin finish - 25% sheen
+            ctx.fillStyle = 'rgb(180, 180, 180)';
             ctx.fillRect(0, 0, this.width, this.height);
 
-            for (let i = 0; i < 4000; i++) {
+            // Very uniform roughness
+            for (let i = 0; i < 500; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
-                const size = Math.random() * 3 + 1;
-                const value = 175 + Math.random() * 30;
+                const value = 175 + Math.random() * 10;
                 ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillRect(x, y, 2, 2);
             }
 
             const texture = new THREE.CanvasTexture(canvas);
@@ -818,29 +808,34 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             
-            // Studio gradient - subtle warm/cool
+            // Dark studio gradient for realistic reflections
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#ffffff');
-            gradient.addColorStop(0.2, '#f8f8f8');
-            gradient.addColorStop(0.5, '#f0f0f0');
-            gradient.addColorStop(0.8, '#e8e8e8');
-            gradient.addColorStop(1, '#e0e0e0');
+            gradient.addColorStop(0, '#4a4a4a');
+            gradient.addColorStop(0.3, '#3a3a3a');
+            gradient.addColorStop(0.5, '#2a2a2a');
+            gradient.addColorStop(0.7, '#1a1a1a');
+            gradient.addColorStop(1, '#0a0a0a');
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Soft light spots
-            for (let i = 0; i < 30; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height * 0.6;
-                const radius = 40 + Math.random() * 80;
-                
-                const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-                spotGradient.addColorStop(0, `rgba(255, 255, 255, ${0.15 + Math.random() * 0.1})`);
-                spotGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            // Bright light spots for reflections
+            const spots = [
+                { x: canvas.width * 0.3, y: canvas.height * 0.2, radius: 120, intensity: 0.7 },
+                { x: canvas.width * 0.7, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
+                { x: canvas.width * 0.5, y: canvas.height * 0.1, radius: 100, intensity: 0.6 },
+                { x: canvas.width * 0.2, y: canvas.height * 0.35, radius: 60, intensity: 0.3 },
+                { x: canvas.width * 0.8, y: canvas.height * 0.3, radius: 70, intensity: 0.35 }
+            ];
+            
+            spots.forEach(spot => {
+                const spotGradient = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.radius);
+                spotGradient.addColorStop(0, `rgba(255, 255, 255, ${spot.intensity})`);
+                spotGradient.addColorStop(0.5, `rgba(200, 200, 200, ${spot.intensity * 0.3})`);
+                spotGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
                 ctx.fillStyle = spotGradient;
-                ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-            }
+                ctx.fillRect(spot.x - spot.radius, spot.y - spot.radius, spot.radius * 2, spot.radius * 2);
+            });
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -878,6 +873,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'Veneer':
                     textures = this.textureGenerator.createVeneerTextures();
                     break;
+                case 'MDF':
+                    textures = this.textureGenerator.createMDFTextures();
+                    break;
                 case 'Flat':
                 case 'Shaker':
                 case 'Door frame':
@@ -890,10 +888,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 normalMap: textures.normal,
                 normalScale: new THREE.Vector2(0.5, 0.5),
                 roughnessMap: textures.roughness,
-                roughness: 0.7,
+                roughness: 0.6,
                 metalness: 0.0,
                 envMap: this.envMap,
-                envMapIntensity: 0.4
+                envMapIntensity: 0.6
             });
 
             this.materialCache[cacheKey] = material;
@@ -911,12 +909,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const material = new THREE.MeshStandardMaterial({
                 map: textures.diffuse,
                 normalMap: textures.normal,
-                normalScale: new THREE.Vector2(0.25, 0.25),
+                normalScale: new THREE.Vector2(0.1, 0.1),
                 roughnessMap: textures.roughness,
-                roughness: 0.75, // 25% sheen
-                metalness: 0.02,
+                roughness: 0.25, // 25% sheen = lower roughness for more reflection
+                metalness: 0.0,
                 envMap: this.envMap,
-                envMapIntensity: 0.5
+                envMapIntensity: 0.8
             });
 
             this.materialCache[cacheKey] = material;
@@ -1212,9 +1210,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let textureGenerator, materialFactory, envMap;
 
     function initThreeJS() {
-        // Scene - white background
+        // Scene - dark gray background
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
+        scene.background = new THREE.Color(0x1a1a1a);
 
         // Camera
         const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
@@ -1271,8 +1269,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupLighting() {
-        // Key light - warm
-        const keyLight = new THREE.DirectionalLight(0xfffaf5, 1.2);
+        // Key light - reduced intensity
+        const keyLight = new THREE.DirectionalLight(0xfff8f0, 0.7);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -1286,33 +1284,41 @@ document.addEventListener('DOMContentLoaded', function() {
         keyLight.shadow.bias = -0.0003;
         scene.add(keyLight);
 
-        // Fill light - cool
-        const fillLight = new THREE.DirectionalLight(0xe8f0ff, 0.5);
+        // Fill light - subtle
+        const fillLight = new THREE.DirectionalLight(0xe0e8ff, 0.25);
         fillLight.position.set(-4, 6, -3);
         scene.add(fillLight);
 
-        // Rim light
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
-        rimLight.position.set(0, 5, -6);
+        // Rim light for edge highlight / reflection effect
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        rimLight.position.set(-2, 3, -4);
         scene.add(rimLight);
 
-        // Ambient
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        // Top highlight for reflection
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        topLight.position.set(0, 8, 0);
+        scene.add(topLight);
+
+        // Ambient - reduced
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
         scene.add(ambientLight);
 
-        // Hemisphere
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xf0f0f0, 0.4);
+        // Hemisphere - subtle
+        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.3);
         scene.add(hemiLight);
     }
 
     function createFloor() {
-        // Shadow-catching floor
+        // Minimal floor for ground reference only
         const floorGeometry = new THREE.PlaneGeometry(15, 15);
-        const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.12 });
+        const floorMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x1a1a1a,
+            transparent: true,
+            opacity: 0
+        });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = 0;
-        floor.receiveShadow = true;
         scene.add(floor);
     }
 
@@ -1377,8 +1383,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const shakerBuilder = new ShakerDoorBuilder(W, H, T);
                 result = shakerBuilder.build(woodMaterial, paintMaterial, selectedFaces);
                 break;
+            case 'MDF':
             case 'Timber':
             case 'Veneer':
+            case 'Flat':
             default:
                 const flatBuilder = new FlatPanelBuilder(W, H, T);
                 result = flatBuilder.build(woodMaterial, paintMaterial, selectedFaces);
