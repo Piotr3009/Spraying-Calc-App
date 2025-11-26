@@ -1380,8 +1380,8 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(rimLight);
         createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
 
-        // 9. LOW FRONT LIGHT - 25% height from bottom - REDUCED
-        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        // 9. LOW FRONT LIGHT - 25% height from bottom - REDUCED 25%
+        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.11);
         lowFrontLight.position.set(0, 0.5, 6);
         scene.add(lowFrontLight);
         createLightHelper(lowFrontLight.position, 0x90ee90, '9. LOW FRONT (25% height)');
