@@ -39,7 +39,7 @@ body {
 }
 
 .container {
-    max-width: 1280px;
+    max-width: 2000px;
     margin: 0 auto;
     padding: 40px 24px;
 }
@@ -89,7 +89,7 @@ header p {
 /* --- Layout --- */
 .main-layout {
     display: grid;
-    grid-template-columns: 1fr 400px; /* Lewa szersza, prawa stała */
+    grid-template-columns: 1fr 700px; /* Lewa szersza, prawa większa dla 3D */
     gap: 32px;
     align-items: start;
 }
@@ -295,8 +295,8 @@ input::placeholder {
 
 #threeCanvas {
     width: 100%;
-    height: 600px;
-    background: #1a1a1a;
+    height: 700px;
+    background: #2d2d2d;
     border-radius: var(--radius);
     margin-bottom: 20px;
     cursor: grab;
@@ -312,6 +312,72 @@ input::placeholder {
     color: var(--text-muted);
     margin-bottom: 12px;
     font-style: italic;
+}
+
+/* RAL Input Group */
+.ral-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.ral-input-group select {
+    flex: 2;
+}
+
+.ral-input-group input {
+    flex: 1;
+    min-width: 100px;
+}
+
+/* Sheen Slider */
+.sheen-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.sheen-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.sheen-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #4a4a4a 0%, #888 50%, #fff 100%);
+    outline: none;
+}
+
+.sheen-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.sheen-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.sheen-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
 }
 
 .svg-diagram-wrapper {

@@ -60,9 +60,217 @@
                         </div>
 
                         <div class="conditional-field visible" id="ralCodeField">
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group">
                                 <label for="ralCode">RAL Code</label>
-                                <input type="text" id="ralCode" placeholder="e.g. 7016">
+                                <div class="ral-input-group">
+                                    <select id="ralSelect">
+                                        <option value="">Select RAL...</option>
+                                        <option value="1000">RAL 1000 - Green Beige</option>
+                                        <option value="1001">RAL 1001 - Beige</option>
+                                        <option value="1002">RAL 1002 - Sand Yellow</option>
+                                        <option value="1003">RAL 1003 - Signal Yellow</option>
+                                        <option value="1004">RAL 1004 - Golden Yellow</option>
+                                        <option value="1005">RAL 1005 - Honey Yellow</option>
+                                        <option value="1006">RAL 1006 - Maize Yellow</option>
+                                        <option value="1007">RAL 1007 - Daffodil Yellow</option>
+                                        <option value="1011">RAL 1011 - Brown Beige</option>
+                                        <option value="1012">RAL 1012 - Lemon Yellow</option>
+                                        <option value="1013">RAL 1013 - Oyster White</option>
+                                        <option value="1014">RAL 1014 - Ivory</option>
+                                        <option value="1015">RAL 1015 - Light Ivory</option>
+                                        <option value="1016">RAL 1016 - Sulfur Yellow</option>
+                                        <option value="1017">RAL 1017 - Saffron Yellow</option>
+                                        <option value="1018">RAL 1018 - Zinc Yellow</option>
+                                        <option value="1019">RAL 1019 - Grey Beige</option>
+                                        <option value="1020">RAL 1020 - Olive Yellow</option>
+                                        <option value="1021">RAL 1021 - Rape Yellow</option>
+                                        <option value="1023">RAL 1023 - Traffic Yellow</option>
+                                        <option value="1024">RAL 1024 - Ochre Yellow</option>
+                                        <option value="1026">RAL 1026 - Luminous Yellow</option>
+                                        <option value="1027">RAL 1027 - Curry</option>
+                                        <option value="1028">RAL 1028 - Melon Yellow</option>
+                                        <option value="2000">RAL 2000 - Yellow Orange</option>
+                                        <option value="2001">RAL 2001 - Red Orange</option>
+                                        <option value="2002">RAL 2002 - Vermilion</option>
+                                        <option value="2003">RAL 2003 - Pastel Orange</option>
+                                        <option value="2004">RAL 2004 - Pure Orange</option>
+                                        <option value="2008">RAL 2008 - Bright Red Orange</option>
+                                        <option value="2009">RAL 2009 - Traffic Orange</option>
+                                        <option value="2010">RAL 2010 - Signal Orange</option>
+                                        <option value="2011">RAL 2011 - Deep Orange</option>
+                                        <option value="2012">RAL 2012 - Salmon Orange</option>
+                                        <option value="3000">RAL 3000 - Flame Red</option>
+                                        <option value="3001">RAL 3001 - Signal Red</option>
+                                        <option value="3002">RAL 3002 - Carmine Red</option>
+                                        <option value="3003">RAL 3003 - Ruby Red</option>
+                                        <option value="3004">RAL 3004 - Purple Red</option>
+                                        <option value="3005">RAL 3005 - Wine Red</option>
+                                        <option value="3007">RAL 3007 - Black Red</option>
+                                        <option value="3009">RAL 3009 - Oxide Red</option>
+                                        <option value="3011">RAL 3011 - Brown Red</option>
+                                        <option value="3012">RAL 3012 - Beige Red</option>
+                                        <option value="3013">RAL 3013 - Tomato Red</option>
+                                        <option value="3014">RAL 3014 - Antique Pink</option>
+                                        <option value="3015">RAL 3015 - Light Pink</option>
+                                        <option value="3016">RAL 3016 - Coral Red</option>
+                                        <option value="3017">RAL 3017 - Rose</option>
+                                        <option value="3018">RAL 3018 - Strawberry Red</option>
+                                        <option value="3020">RAL 3020 - Traffic Red</option>
+                                        <option value="3022">RAL 3022 - Salmon Pink</option>
+                                        <option value="3027">RAL 3027 - Raspberry Red</option>
+                                        <option value="3031">RAL 3031 - Orient Red</option>
+                                        <option value="4001">RAL 4001 - Red Lilac</option>
+                                        <option value="4002">RAL 4002 - Red Violet</option>
+                                        <option value="4003">RAL 4003 - Heather Violet</option>
+                                        <option value="4004">RAL 4004 - Claret Violet</option>
+                                        <option value="4005">RAL 4005 - Blue Lilac</option>
+                                        <option value="4006">RAL 4006 - Traffic Purple</option>
+                                        <option value="4007">RAL 4007 - Purple Violet</option>
+                                        <option value="4008">RAL 4008 - Signal Violet</option>
+                                        <option value="4009">RAL 4009 - Pastel Violet</option>
+                                        <option value="4010">RAL 4010 - Telemagenta</option>
+                                        <option value="5000">RAL 5000 - Violet Blue</option>
+                                        <option value="5001">RAL 5001 - Green Blue</option>
+                                        <option value="5002">RAL 5002 - Ultramarine Blue</option>
+                                        <option value="5003">RAL 5003 - Sapphire Blue</option>
+                                        <option value="5004">RAL 5004 - Black Blue</option>
+                                        <option value="5005">RAL 5005 - Signal Blue</option>
+                                        <option value="5007">RAL 5007 - Brilliant Blue</option>
+                                        <option value="5008">RAL 5008 - Grey Blue</option>
+                                        <option value="5009">RAL 5009 - Azure Blue</option>
+                                        <option value="5010">RAL 5010 - Gentian Blue</option>
+                                        <option value="5011">RAL 5011 - Steel Blue</option>
+                                        <option value="5012">RAL 5012 - Light Blue</option>
+                                        <option value="5013">RAL 5013 - Cobalt Blue</option>
+                                        <option value="5014">RAL 5014 - Pigeon Blue</option>
+                                        <option value="5015">RAL 5015 - Sky Blue</option>
+                                        <option value="5017">RAL 5017 - Traffic Blue</option>
+                                        <option value="5018">RAL 5018 - Turquoise Blue</option>
+                                        <option value="5019">RAL 5019 - Capri Blue</option>
+                                        <option value="5020">RAL 5020 - Ocean Blue</option>
+                                        <option value="5021">RAL 5021 - Water Blue</option>
+                                        <option value="5022">RAL 5022 - Night Blue</option>
+                                        <option value="5023">RAL 5023 - Distant Blue</option>
+                                        <option value="5024">RAL 5024 - Pastel Blue</option>
+                                        <option value="6000">RAL 6000 - Patina Green</option>
+                                        <option value="6001">RAL 6001 - Emerald Green</option>
+                                        <option value="6002">RAL 6002 - Leaf Green</option>
+                                        <option value="6003">RAL 6003 - Olive Green</option>
+                                        <option value="6004">RAL 6004 - Blue Green</option>
+                                        <option value="6005">RAL 6005 - Moss Green</option>
+                                        <option value="6006">RAL 6006 - Grey Olive</option>
+                                        <option value="6007">RAL 6007 - Bottle Green</option>
+                                        <option value="6008">RAL 6008 - Brown Green</option>
+                                        <option value="6009">RAL 6009 - Fir Green</option>
+                                        <option value="6010">RAL 6010 - Grass Green</option>
+                                        <option value="6011">RAL 6011 - Reseda Green</option>
+                                        <option value="6012">RAL 6012 - Black Green</option>
+                                        <option value="6013">RAL 6013 - Reed Green</option>
+                                        <option value="6014">RAL 6014 - Yellow Olive</option>
+                                        <option value="6015">RAL 6015 - Black Olive</option>
+                                        <option value="6016">RAL 6016 - Turquoise Green</option>
+                                        <option value="6017">RAL 6017 - May Green</option>
+                                        <option value="6018">RAL 6018 - Yellow Green</option>
+                                        <option value="6019">RAL 6019 - Pastel Green</option>
+                                        <option value="6020">RAL 6020 - Chrome Green</option>
+                                        <option value="6021">RAL 6021 - Pale Green</option>
+                                        <option value="6022">RAL 6022 - Olive Drab</option>
+                                        <option value="6024">RAL 6024 - Traffic Green</option>
+                                        <option value="6025">RAL 6025 - Fern Green</option>
+                                        <option value="6026">RAL 6026 - Opal Green</option>
+                                        <option value="6027">RAL 6027 - Light Green</option>
+                                        <option value="6028">RAL 6028 - Pine Green</option>
+                                        <option value="6029">RAL 6029 - Mint Green</option>
+                                        <option value="6032">RAL 6032 - Signal Green</option>
+                                        <option value="6033">RAL 6033 - Mint Turquoise</option>
+                                        <option value="6034">RAL 6034 - Pastel Turquoise</option>
+                                        <option value="7000">RAL 7000 - Squirrel Grey</option>
+                                        <option value="7001">RAL 7001 - Silver Grey</option>
+                                        <option value="7002">RAL 7002 - Olive Grey</option>
+                                        <option value="7003">RAL 7003 - Moss Grey</option>
+                                        <option value="7004">RAL 7004 - Signal Grey</option>
+                                        <option value="7005">RAL 7005 - Mouse Grey</option>
+                                        <option value="7006">RAL 7006 - Beige Grey</option>
+                                        <option value="7008">RAL 7008 - Khaki Grey</option>
+                                        <option value="7009">RAL 7009 - Green Grey</option>
+                                        <option value="7010">RAL 7010 - Tarpaulin Grey</option>
+                                        <option value="7011">RAL 7011 - Iron Grey</option>
+                                        <option value="7012">RAL 7012 - Basalt Grey</option>
+                                        <option value="7013">RAL 7013 - Brown Grey</option>
+                                        <option value="7015">RAL 7015 - Slate Grey</option>
+                                        <option value="7016">RAL 7016 - Anthracite Grey</option>
+                                        <option value="7021">RAL 7021 - Black Grey</option>
+                                        <option value="7022">RAL 7022 - Umbra Grey</option>
+                                        <option value="7023">RAL 7023 - Concrete Grey</option>
+                                        <option value="7024">RAL 7024 - Graphite Grey</option>
+                                        <option value="7026">RAL 7026 - Granite Grey</option>
+                                        <option value="7030">RAL 7030 - Stone Grey</option>
+                                        <option value="7031">RAL 7031 - Blue Grey</option>
+                                        <option value="7032">RAL 7032 - Pebble Grey</option>
+                                        <option value="7033">RAL 7033 - Cement Grey</option>
+                                        <option value="7034">RAL 7034 - Yellow Grey</option>
+                                        <option value="7035">RAL 7035 - Light Grey</option>
+                                        <option value="7036">RAL 7036 - Platinum Grey</option>
+                                        <option value="7037">RAL 7037 - Dusty Grey</option>
+                                        <option value="7038">RAL 7038 - Agate Grey</option>
+                                        <option value="7039">RAL 7039 - Quartz Grey</option>
+                                        <option value="7040">RAL 7040 - Window Grey</option>
+                                        <option value="7042">RAL 7042 - Traffic Grey A</option>
+                                        <option value="7043">RAL 7043 - Traffic Grey B</option>
+                                        <option value="7044">RAL 7044 - Silk Grey</option>
+                                        <option value="7045">RAL 7045 - Telegrey 1</option>
+                                        <option value="7046">RAL 7046 - Telegrey 2</option>
+                                        <option value="7047">RAL 7047 - Telegrey 4</option>
+                                        <option value="8000">RAL 8000 - Green Brown</option>
+                                        <option value="8001">RAL 8001 - Ochre Brown</option>
+                                        <option value="8002">RAL 8002 - Signal Brown</option>
+                                        <option value="8003">RAL 8003 - Clay Brown</option>
+                                        <option value="8004">RAL 8004 - Copper Brown</option>
+                                        <option value="8007">RAL 8007 - Fawn Brown</option>
+                                        <option value="8008">RAL 8008 - Olive Brown</option>
+                                        <option value="8011">RAL 8011 - Nut Brown</option>
+                                        <option value="8012">RAL 8012 - Red Brown</option>
+                                        <option value="8014">RAL 8014 - Sepia Brown</option>
+                                        <option value="8015">RAL 8015 - Chestnut Brown</option>
+                                        <option value="8016">RAL 8016 - Mahogany Brown</option>
+                                        <option value="8017">RAL 8017 - Chocolate Brown</option>
+                                        <option value="8019">RAL 8019 - Grey Brown</option>
+                                        <option value="8022">RAL 8022 - Black Brown</option>
+                                        <option value="8023">RAL 8023 - Orange Brown</option>
+                                        <option value="8024">RAL 8024 - Beige Brown</option>
+                                        <option value="8025">RAL 8025 - Pale Brown</option>
+                                        <option value="8028">RAL 8028 - Terra Brown</option>
+                                        <option value="9001">RAL 9001 - Cream</option>
+                                        <option value="9002">RAL 9002 - Grey White</option>
+                                        <option value="9003">RAL 9003 - Signal White</option>
+                                        <option value="9004">RAL 9004 - Signal Black</option>
+                                        <option value="9005">RAL 9005 - Jet Black</option>
+                                        <option value="9006">RAL 9006 - White Aluminium</option>
+                                        <option value="9007">RAL 9007 - Grey Aluminium</option>
+                                        <option value="9010">RAL 9010 - Pure White</option>
+                                        <option value="9011">RAL 9011 - Graphite Black</option>
+                                        <option value="9016">RAL 9016 - Traffic White</option>
+                                        <option value="9017">RAL 9017 - Traffic Black</option>
+                                        <option value="9018">RAL 9018 - Papyrus White</option>
+                                    </select>
+                                    <input type="text" id="ralCode" placeholder="or type code">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 16px;">
+                            <label for="sheenSlider">Sheen Level: <span id="sheenValue">30</span>%</label>
+                            <div class="sheen-slider-container">
+                                <span class="sheen-label">Matt</span>
+                                <input type="range" id="sheenSlider" min="0" max="100" value="30" class="sheen-slider">
+                                <span class="sheen-label">Gloss</span>
+                            </div>
+                            <div class="sheen-scale">
+                                <span>0% Dead Matt</span>
+                                <span>30% Eggshell</span>
+                                <span>50% Satin</span>
+                                <span>70% Semi-Gloss</span>
+                                <span>100% Mirror</span>
                             </div>
                         </div>
 

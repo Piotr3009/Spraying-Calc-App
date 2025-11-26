@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const colourStandardRadios = document.querySelectorAll('input[name="colourStandard"]');
     const ralCodeField = document.getElementById('ralCodeField');
     const ralCodeInput = document.getElementById('ralCode');
+    const ralSelect = document.getElementById('ralSelect');
+    const sheenSlider = document.getElementById('sheenSlider');
+    const sheenValue = document.getElementById('sheenValue');
     const paintManufacturerInput = document.getElementById('paintManufacturer');
     const paintLocationSelect = document.getElementById('paintLocation');
     const elementTypeSelect = document.getElementById('elementType');
@@ -153,6 +156,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return 0x708238; // Default olive
+    }
+
+    // =========================================================
+    // GET SHEEN LEVEL (0-100 -> roughness 1.0-0.0)
+    // =========================================================
+    function getSheen() {
+        const sheenPercent = parseInt(sheenSlider?.value || 30);
+        // 0% sheen = 1.0 roughness (total matt)
+        // 100% sheen = 0.0 roughness (mirror)
+        return 1.0 - (sheenPercent / 100);
     }
 
     // =========================================================
@@ -797,37 +810,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Dark studio gradient for realistic reflections
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#4a4a4a');
-            gradient.addColorStop(0.3, '#3a3a3a');
-            gradient.addColorStop(0.5, '#2a2a2a');
-            gradient.addColorStop(0.7, '#1a1a1a');
-            gradient.addColorStop(1, '#0a0a0a');
+            gradient.addColorStop(0, '#5a5a5a');
+            gradient.addColorStop(0.3, '#454545');
+            gradient.addColorStop(0.5, '#353535');
+            gradient.addColorStop(0.7, '#2d2d2d');
+            gradient.addColorStop(1, '#1a1a1a');
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Light spots - REDUCED intensity for darker colors
+            // Light spots - BRIGHTER for mirror reflections
             const spots = [
                 // Front lights
-                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.35 },
-                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.3 },
+                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.7 },
+                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.6 },
                 // Right side light - closer to front (~20 degrees), lower
-                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.4 },
-                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.35 },
+                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.75 },
+                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.65 },
                 // Back lights
-                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.3 },
-                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.35 },
+                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.55 },
+                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
                 // Left side lights
-                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
-                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
-                // Top center
-                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 120, intensity: 0.4 }
+                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                // Top center - bright for ceiling reflection
+                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 150, intensity: 0.8 }
             ];
             
             spots.forEach(spot => {
                 const spotGradient = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.radius);
                 spotGradient.addColorStop(0, `rgba(255, 255, 255, ${spot.intensity})`);
-                spotGradient.addColorStop(0.5, `rgba(200, 200, 200, ${spot.intensity * 0.3})`);
+                spotGradient.addColorStop(0.4, `rgba(220, 220, 220, ${spot.intensity * 0.5})`);
                 spotGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
                 ctx.fillStyle = spotGradient;
                 ctx.fillRect(spot.x - spot.radius, spot.y - spot.radius, spot.radius * 2, spot.radius * 2);
@@ -894,23 +907,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return material;
         }
 
-        getPaintedMaterial(colorHex) {
-            const cacheKey = `paint_${colorHex}`;
+        getPaintedMaterial(colorHex, roughness) {
+            const cacheKey = `paint_${colorHex}_${roughness.toFixed(2)}`;
             if (this.materialCache[cacheKey]) {
                 return this.materialCache[cacheKey];
             }
 
             const textures = this.textureGenerator.createPaintedTextures(colorHex);
+            
+            // Higher sheen = higher envMapIntensity for more reflection
+            const envIntensity = 0.2 + (1 - roughness) * 0.8; // 0.2 for matt, 1.0 for mirror
 
             const material = new THREE.MeshStandardMaterial({
                 map: textures.diffuse,
                 normalMap: textures.normal,
                 normalScale: new THREE.Vector2(0.1, 0.1),
-                roughnessMap: textures.roughness,
-                roughness: 0.35,
-                metalness: 0.0,
+                roughnessMap: null, // Use direct roughness value
+                roughness: roughness,
+                metalness: roughness < 0.1 ? 0.1 : 0.0, // Slight metalness for mirror effect
                 envMap: this.envMap,
-                envMapIntensity: 0.4
+                envMapIntensity: envIntensity
             });
 
             this.materialCache[cacheKey] = material;
@@ -1206,9 +1222,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let textureGenerator, materialFactory, envMap;
 
     function initThreeJS() {
-        // Scene - dark gray background
+        // Scene - dark gray background (lighter)
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+        scene.background = new THREE.Color(0x2d2d2d);
 
         // Camera
         const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
@@ -1226,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.8;
+        renderer.toneMappingExposure = 0.9;
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1265,8 +1281,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupLighting() {
-        // Key light - front - REDUCED
-        const keyLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        // Key light - front
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -1281,31 +1297,31 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(keyLight);
 
         // Back light - for back face
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
         backLight.position.set(-3, 6, -8);
         scene.add(backLight);
 
         // Left side light
-        const leftLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        const leftLight = new THREE.DirectionalLight(0xffffff, 0.3);
         leftLight.position.set(-8, 5, 2);
         scene.add(leftLight);
 
         // Right side light - LOWER, at element mid-height, 20 degrees from front
-        const rightLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        const rightLight = new THREE.DirectionalLight(0xffffff, 0.45);
         rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
 
         // Top light
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.25);
         topLight.position.set(0, 10, 0);
         scene.add(topLight);
 
-        // Ambient - VERY LOW
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.15);
+        // Ambient - subtle
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
         scene.add(ambientLight);
 
-        // Hemisphere - minimal
-        const hemiLight = new THREE.HemisphereLight(0x404040, 0x101010, 0.1);
+        // Hemisphere
+        const hemiLight = new THREE.HemisphereLight(0x404040, 0x101010, 0.15);
         scene.add(hemiLight);
     }
 
@@ -1397,9 +1413,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Get materials
         const paintColor = getSelectedPaintColor();
+        const roughness = getSheen();
         materialFactory.clearPaintCache();
         const woodMaterial = materialFactory.getWoodMaterial(elementType);
-        const paintMaterial = materialFactory.getPaintedMaterial(paintColor);
+        const paintMaterial = materialFactory.getPaintedMaterial(paintColor, roughness);
 
         const selectedFaces = {
             front: faces.front.selected,
@@ -1766,8 +1783,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     ralCodeInput.addEventListener('input', function() {
+        // Clear select when typing
+        if (ralSelect) ralSelect.value = '';
         createDoor();
     });
+
+    // RAL Select change
+    if (ralSelect) {
+        ralSelect.addEventListener('change', function() {
+            ralCodeInput.value = this.value;
+            createDoor();
+        });
+    }
+
+    // Sheen slider
+    if (sheenSlider) {
+        sheenSlider.addEventListener('input', function() {
+            if (sheenValue) sheenValue.textContent = this.value;
+            materialFactory.clearPaintCache();
+            createDoor();
+        });
+    }
 
     legendCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function(e) {
