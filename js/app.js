@@ -1329,8 +1329,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove old helpers
         removeLightHelpers();
 
-        // 1. KEY LIGHT - Front top right (main light)
-        const keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        // 1. KEY LIGHT - Front top right (main light) - DIMMED
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -1338,72 +1338,72 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(keyLight);
         createLightHelper(keyLight.position, 0xffff00, '1. KEY (front-top-right)');
 
-        // 2. FILL LIGHT - Front left
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        // 2. FILL LIGHT - Front left - DIMMED
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.15);
         fillLight.position.set(-5, 6, 5);
         scene.add(fillLight);
         createLightHelper(fillLight.position, 0x00ff00, '2. FILL (front-left)');
 
-        // 3. BACK LIGHT - Behind object
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        // 3. BACK LIGHT - Behind object - DIMMED
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.15);
         backLight.position.set(-3, 6, -8);
         scene.add(backLight);
         createLightHelper(backLight.position, 0x0000ff, '3. BACK (behind)');
 
-        // 4. LEFT SIDE LIGHT
-        const leftLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        // 4. LEFT SIDE LIGHT - DIMMED
+        const leftLight = new THREE.DirectionalLight(0xffffff, 0.15);
         leftLight.position.set(-8, 4, 0);
         scene.add(leftLight);
         createLightHelper(leftLight.position, 0xff00ff, '4. LEFT SIDE');
 
-        // 5. RIGHT SIDE LIGHT - Lower, for reflection
-        const rightLight = new THREE.DirectionalLight(0xffffff, 0.45);
+        // 5. RIGHT SIDE LIGHT - Lower, for reflection - DIMMED
+        const rightLight = new THREE.DirectionalLight(0xffffff, 0.2);
         rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
         createLightHelper(rightLight.position, 0x00ffff, '5. RIGHT (low-front)');
 
-        // 6. TOP LIGHT - Directly above
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        // 6. TOP LIGHT - Directly above - DIMMED
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.12);
         topLight.position.set(0, 10, 0);
         scene.add(topLight);
         createLightHelper(topLight.position, 0xffa500, '6. TOP (above)');
 
-        // 7. BOTTOM FILL - From below
-        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        // 7. BOTTOM FILL - From below - DIMMED
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.08);
         bottomLight.position.set(0, -5, 3);
         scene.add(bottomLight);
         createLightHelper(bottomLight.position, 0x8b4513, '7. BOTTOM (below)');
 
-        // 8. RIM LIGHT - Back edge highlight
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        // 8. RIM LIGHT - Back edge highlight - DIMMED
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.18);
         rimLight.position.set(4, 3, -5);
         scene.add(rimLight);
         createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
 
-        // 9. LOW FRONT LIGHT - 25% height from bottom
+        // 9. LOW FRONT LIGHT - 25% height from bottom - UNCHANGED
         const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.4);
         lowFrontLight.position.set(0, 0.5, 6);
         scene.add(lowFrontLight);
         createLightHelper(lowFrontLight.position, 0x90ee90, '9. LOW FRONT (25% height)');
 
-        // Ambient - subtle fill
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
+        // Ambient - subtle fill - DIMMED
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.1);
         scene.add(ambientLight);
 
-        // Hemisphere - sky/ground
-        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.15);
+        // Hemisphere - sky/ground - DIMMED
+        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.08);
         scene.add(hemiLight);
 
         console.log('=== LIGHT POSITIONS ===');
-        console.log('1. KEY (yellow):      (5, 10, 7)   - Front top right');
-        console.log('2. FILL (green):      (-5, 6, 5)   - Front left');
-        console.log('3. BACK (blue):       (-3, 6, -8)  - Behind');
-        console.log('4. LEFT (magenta):    (-8, 4, 0)   - Left side');
-        console.log('5. RIGHT (cyan):      (3, 1.5, 7)  - Low front right');
-        console.log('6. TOP (orange):      (0, 10, 0)   - Directly above');
-        console.log('7. BOTTOM (brown):    (0, -5, 3)   - Below');
-        console.log('8. RIM (red):         (4, 3, -5)   - Back right edge');
-        console.log('9. LOW FRONT (lime):  (0, 0.5, 6)  - 25% height front');
+        console.log('1. KEY (yellow):      (5, 10, 7)   - 0.25 (dimmed)');
+        console.log('2. FILL (green):      (-5, 6, 5)   - 0.15 (dimmed)');
+        console.log('3. BACK (blue):       (-3, 6, -8)  - 0.15 (dimmed)');
+        console.log('4. LEFT (magenta):    (-8, 4, 0)   - 0.15 (dimmed)');
+        console.log('5. RIGHT (cyan):      (3, 1.5, 7)  - 0.20 (dimmed)');
+        console.log('6. TOP (orange):      (0, 10, 0)   - 0.12 (dimmed)');
+        console.log('7. BOTTOM (brown):    (0, -5, 3)   - 0.08 (dimmed)');
+        console.log('8. RIM (red):         (4, 3, -5)   - 0.18 (dimmed)');
+        console.log('9. LOW FRONT (lime):  (0, 0.5, 6)  - 0.40 (UNCHANGED)');
     }
 
     // =========================================================
@@ -1531,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         doorGroup = result.group;
         
         // Position at 30% from bottom (raised 10%)
-        doorGroup.position.y = H * 0.4;
+        doorGroup.position.y = H * 0.2;
 
         result.meshes.forEach(item => {
             clickableMeshes.push(item.mesh);
