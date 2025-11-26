@@ -1380,6 +1380,12 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(rimLight);
         createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
 
+        // 9. LOW FRONT LIGHT - 25% height from bottom
+        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        lowFrontLight.position.set(0, 0.5, 6);
+        scene.add(lowFrontLight);
+        createLightHelper(lowFrontLight.position, 0x90ee90, '9. LOW FRONT (25% height)');
+
         // Ambient - subtle fill
         const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
         scene.add(ambientLight);
@@ -1397,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('6. TOP (orange):      (0, 10, 0)   - Directly above');
         console.log('7. BOTTOM (brown):    (0, -5, 3)   - Below');
         console.log('8. RIM (red):         (4, 3, -5)   - Back right edge');
+        console.log('9. LOW FRONT (lime):  (0, 0.5, 6)  - 25% height front');
     }
 
     // =========================================================
@@ -1422,8 +1429,8 @@ document.addEventListener('DOMContentLoaded', function() {
         camera.getWorldDirection(direction);
         direction.negate();
         
-        // Calculate new camera position
-        const targetY = height * 0.4;
+        // Calculate new camera position - target raised 10%
+        const targetY = height * 0.5;
         const newPosition = new THREE.Vector3(
             direction.x * targetDistance,
             targetY + targetDistance * 0.4,
@@ -1523,8 +1530,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         doorGroup = result.group;
         
-        // Position at 20% from bottom
-        doorGroup.position.y = H * 0.1;
+        // Position at 30% from bottom (raised 10%)
+        doorGroup.position.y = H * 0.2;
 
         result.meshes.forEach(item => {
             clickableMeshes.push(item.mesh);
