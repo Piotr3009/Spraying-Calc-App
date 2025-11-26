@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SprayCalc Pro</title> <link rel="stylesheet" href="css/style.css">
+    <title>SprayCalc Pro</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -163,25 +166,33 @@
                     <p class="section-lede">Click faces below to include them in the calculation.</p>
 
                     <div class="visualisation-container">
-                        <div class="svg-diagram-wrapper" id="svgDiagramWrapper">
-                            </div>
+                        <canvas id="threeCanvas"></canvas>
                         
                         <div class="face-legend">
-                            <div class="legend-item selected" data-face="front">Front</div>
-                            <div class="legend-item" data-face="back">Back</div>
-                            <div class="legend-item" data-face="top">Top</div>
-                            <div class="legend-item" data-face="bottom">Btm</div>
-                            <div class="legend-item" data-face="left">Left</div>
-                            <div class="legend-item" data-face="right">Right</div>
-                            
-                            <div style="display:none;">
+                            <label class="legend-item selected" data-face="front">
                                 <input type="checkbox" class="legend-checkbox" data-face="front" checked>
+                                <span>Front</span>
+                            </label>
+                            <label class="legend-item" data-face="back">
                                 <input type="checkbox" class="legend-checkbox" data-face="back">
+                                <span>Back</span>
+                            </label>
+                            <label class="legend-item" data-face="top">
                                 <input type="checkbox" class="legend-checkbox" data-face="top">
+                                <span>Top</span>
+                            </label>
+                            <label class="legend-item" data-face="bottom">
                                 <input type="checkbox" class="legend-checkbox" data-face="bottom">
+                                <span>Btm</span>
+                            </label>
+                            <label class="legend-item" data-face="left">
                                 <input type="checkbox" class="legend-checkbox" data-face="left">
+                                <span>Left</span>
+                            </label>
+                            <label class="legend-item" data-face="right">
                                 <input type="checkbox" class="legend-checkbox" data-face="right">
-                            </div>
+                                <span>Right</span>
+                            </label>
                         </div>
 
                         <span class="error-msg" id="facesError" style="text-align: center;">Select at least one face</span>

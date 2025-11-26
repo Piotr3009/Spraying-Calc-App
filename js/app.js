@@ -1,22 +1,17 @@
 // js/app.js
 // =========================================================
 // SPRAY PAINTING AREA & PRICE CALCULATOR - Main Application
+// With Three.js 3D Visualization
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // PRICE TABLE CONFIGURATION
-    // ---------------------------------------------------------
-    // Edit the prices below to change the cost per square meter.
-    // Structure: priceTable[elementType][paintLocation][priceLevelIndex]
-    // paintLocation: 'internal' or 'external'
-    // priceLevelIndex: 0 = Level 1, 1 = Level 2, 2 = Level 3
-    // All prices are in GBP (£) per square meter.
     // =========================================================
     const priceTable = {
         "Flat": {
-            internal: [25, 30, 35],      // Level 1, 2, 3 for internal
-            external: [30, 36, 42]       // Level 1, 2, 3 for external
+            internal: [25, 30, 35],
+            external: [30, 36, 42]
         },
         "Shaker": {
             internal: [32, 38, 44],
@@ -50,9 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // FACE SELECTION STATE
-    // ---------------------------------------------------------
-    // Tracks which faces are selected for painting.
-    // Default: only 'front' is selected initially.
     // =========================================================
     const faces = {
         front:  { selected: true },
@@ -65,8 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // =========================================================
     // PROJECT DATA
-    // ---------------------------------------------------------
-    // Stores all added elements for the project summary.
     // =========================================================
     let projectElements = [];
 
@@ -96,8 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryBody = document.getElementById('summaryBody');
     const emptyState = document.getElementById('emptyState');
     const projectTotalDisplay = document.getElementById('projectTotal');
-    const svgDiagramWrapper = document.getElementById('svgDiagramWrapper');
-    const dimensionDisplayDims = document.getElementById('dimensionDisplayDims');
+    const threeCanvas = document.getElementById('threeCanvas');
 
     // Error message elements
     const elementTypeError = document.getElementById('elementTypeError');
@@ -107,16 +96,556 @@ document.addEventListener('DOMContentLoaded', function() {
     const facesError = document.getElementById('facesError');
     const pricePerM2Error = document.getElementById('pricePerM2Error');
 
-    // =========================================================
-    // LOCAL STORAGE KEY
-    // ---------------------------------------------------------
-    // Used to persist form values between sessions.
-    // Does NOT store dimensions or face selections.
-    // =========================================================
     const STORAGE_KEY = 'sprayCalcLastForm';
 
     // =========================================================
-    // LOAD SAVED FORM DATA FROM LOCAL STORAGE
+    // THREE.JS SETUP
+    // =========================================================
+    let scene, camera, renderer, controls;
+    let doorGroup;
+    let faceMeshes = {};
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // Colors
+    const OLIVE_COLOR = 0x708238;
+    const MDF_COLOR = 0xc4a574;
+    const TIMBER_COLOR = 0x8b6914;
+
+    function initThreeJS() {
+        // Scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // Camera
+        const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
+        camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+        camera.position.set(3, 2, 4);
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ 
+            canvas: threeCanvas, 
+            antialias: true 
+        });
+        renderer.setSize(threeCanvas.clientWidth, threeCanvas.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Controls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 7);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        fillLight.position.set(-5, 5, -5);
+        scene.add(fillLight);
+
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x333333);
+        scene.add(gridHelper);
+
+        // Create initial door
+        createDoor();
+
+        // Animation loop
+        animate();
+
+        // Handle resize
+        window.addEventListener('resize', onWindowResize);
+
+        // Handle click
+        threeCanvas.addEventListener('click', onCanvasClick);
+    }
+
+    function onWindowResize() {
+        const width = threeCanvas.clientWidth;
+        const height = threeCanvas.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // =========================================================
+    // CREATE DOOR MODEL
+    // =========================================================
+    function createDoor() {
+        // Remove existing door
+        if (doorGroup) {
+            scene.remove(doorGroup);
+        }
+
+        doorGroup = new THREE.Group();
+        faceMeshes = {};
+
+        // Get dimensions (convert mm to scene units, scale down)
+        const W = (parseFloat(widthInput.value) || 600) / 400;
+        const H = (parseFloat(heightInput.value) || 400) / 400;
+        const T = (parseFloat(thicknessInput.value) || 18) / 400;
+
+        const elementType = elementTypeSelect.value || 'Flat';
+
+        // Create textures
+        const mdfTexture = createMDFTexture();
+        const timberTexture = createTimberTexture();
+
+        // Choose base texture based on type
+        let baseTexture = mdfTexture;
+        if (elementType === 'Timber') {
+            baseTexture = timberTexture;
+        }
+
+        // Create materials for each face
+        const createMaterial = (faceName) => {
+            const isSelected = faces[faceName].selected;
+            if (isSelected) {
+                return new THREE.MeshStandardMaterial({
+                    color: OLIVE_COLOR,
+                    roughness: 0.3,
+                    metalness: 0.1
+                });
+            } else {
+                return new THREE.MeshStandardMaterial({
+                    map: baseTexture,
+                    roughness: 0.8,
+                    metalness: 0.0
+                });
+            }
+        };
+
+        // Create box with separate materials for each face
+        // Order: right, left, top, bottom, front, back
+        const materials = [
+            createMaterial('right'),   // +X
+            createMaterial('left'),    // -X
+            createMaterial('top'),     // +Y
+            createMaterial('bottom'),  // -Y
+            createMaterial('front'),   // +Z
+            createMaterial('back')     // -Z
+        ];
+
+        const geometry = new THREE.BoxGeometry(W, H, T);
+        const mainBox = new THREE.Mesh(geometry, materials);
+        mainBox.castShadow = true;
+        mainBox.receiveShadow = true;
+        mainBox.position.y = H / 2;
+
+        // Store face references for raycasting
+        mainBox.userData.faceMapping = {
+            0: 'right',
+            1: 'left',
+            2: 'top',
+            3: 'bottom',
+            4: 'front',
+            5: 'back'
+        };
+
+        doorGroup.add(mainBox);
+        faceMeshes.main = mainBox;
+
+        // Add Shaker style frame if needed
+        if (elementType === 'Shaker') {
+            addShakerFrame(W, H, T, baseTexture);
+        }
+
+        scene.add(doorGroup);
+    }
+
+    function addShakerFrame(W, H, T, texture) {
+        const frameWidth = 0.08;
+        const frameDepth = T * 0.3;
+        const innerW = W - frameWidth * 2;
+        const innerH = H - frameWidth * 2;
+
+        const frameMaterial = new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.7
+        });
+
+        // Top frame
+        const topFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(W, frameWidth, frameDepth),
+            faces.front.selected ? 
+                new THREE.MeshStandardMaterial({ color: OLIVE_COLOR, roughness: 0.3 }) : 
+                frameMaterial
+        );
+        topFrame.position.set(0, H - frameWidth/2, T/2 + frameDepth/2);
+        doorGroup.add(topFrame);
+
+        // Bottom frame
+        const bottomFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(W, frameWidth, frameDepth),
+            faces.front.selected ? 
+                new THREE.MeshStandardMaterial({ color: OLIVE_COLOR, roughness: 0.3 }) : 
+                frameMaterial
+        );
+        bottomFrame.position.set(0, frameWidth/2, T/2 + frameDepth/2);
+        doorGroup.add(bottomFrame);
+
+        // Left frame
+        const leftFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameWidth, innerH, frameDepth),
+            faces.front.selected ? 
+                new THREE.MeshStandardMaterial({ color: OLIVE_COLOR, roughness: 0.3 }) : 
+                frameMaterial
+        );
+        leftFrame.position.set(-W/2 + frameWidth/2, H/2, T/2 + frameDepth/2);
+        doorGroup.add(leftFrame);
+
+        // Right frame
+        const rightFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameWidth, innerH, frameDepth),
+            faces.front.selected ? 
+                new THREE.MeshStandardMaterial({ color: OLIVE_COLOR, roughness: 0.3 }) : 
+                frameMaterial
+        );
+        rightFrame.position.set(W/2 - frameWidth/2, H/2, T/2 + frameDepth/2);
+        doorGroup.add(rightFrame);
+    }
+
+    // =========================================================
+    // TEXTURE GENERATION
+    // =========================================================
+    function createMDFTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base MDF color
+        ctx.fillStyle = '#c4a574';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add subtle grain
+        for (let i = 0; i < 5000; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const brightness = 180 + Math.random() * 30;
+            ctx.fillStyle = `rgb(${brightness}, ${brightness * 0.85}, ${brightness * 0.6})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    function createTimberTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base wood color
+        ctx.fillStyle = '#8b6914';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Wood grain lines
+        ctx.strokeStyle = '#6b4f0f';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 40; i++) {
+            ctx.beginPath();
+            const y = i * 6 + Math.random() * 4;
+            ctx.moveTo(0, y);
+            for (let x = 0; x < 256; x += 10) {
+                ctx.lineTo(x, y + Math.sin(x * 0.05) * 3 + Math.random() * 2);
+            }
+            ctx.stroke();
+        }
+
+        // Add knots
+        for (let i = 0; i < 2; i++) {
+            const x = Math.random() * 200 + 28;
+            const y = Math.random() * 200 + 28;
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 15);
+            gradient.addColorStop(0, '#4a3508');
+            gradient.addColorStop(1, '#8b6914');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.ellipse(x, y, 12, 8, Math.random() * Math.PI, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    // =========================================================
+    // RAYCASTING - CLICK ON FACES
+    // =========================================================
+    function onCanvasClick(event) {
+        const rect = threeCanvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(faceMeshes.main);
+
+        if (intersects.length > 0) {
+            const faceIndex = Math.floor(intersects[0].faceIndex / 2);
+            const faceName = faceMeshes.main.userData.faceMapping[faceIndex];
+            if (faceName) {
+                toggleFace(faceName);
+            }
+        }
+    }
+
+    // =========================================================
+    // FACE TOGGLE & UI UPDATE
+    // =========================================================
+    function toggleFace(faceName) {
+        faces[faceName].selected = !faces[faceName].selected;
+        updateFaceUI();
+        createDoor(); // Rebuild door with new colors
+        updateCalculations();
+    }
+
+    function updateFaceUI() {
+        // Update legend items
+        legendItems.forEach(item => {
+            const face = item.dataset.face;
+            const checkbox = item.querySelector('.legend-checkbox');
+            if (faces[face].selected) {
+                item.classList.add('selected');
+                if (checkbox) checkbox.checked = true;
+            } else {
+                item.classList.remove('selected');
+                if (checkbox) checkbox.checked = false;
+            }
+        });
+
+        // Update selected faces display
+        const selectedFaceNames = Object.keys(faces)
+            .filter(f => faces[f].selected)
+            .map(f => f.charAt(0).toUpperCase() + f.slice(1));
+        selectedFacesDisplay.textContent = selectedFaceNames.length > 0 
+            ? selectedFaceNames.join(', ') 
+            : 'None';
+
+        // Handle faces error
+        if (selectedFaceNames.length === 0) {
+            facesError.classList.add('visible');
+        } else {
+            facesError.classList.remove('visible');
+        }
+    }
+
+    // =========================================================
+    // CALCULATIONS
+    // =========================================================
+    function updateCalculations() {
+        const W = parseFloat(widthInput.value) || 0;
+        const H = parseFloat(heightInput.value) || 0;
+        const T = parseFloat(thicknessInput.value) || 0;
+        const pricePerM2 = parseFloat(pricePerM2Input.value) || 0;
+
+        // Calculate area for selected faces
+        let totalArea = 0;
+        if (faces.front.selected) totalArea += W * H;
+        if (faces.back.selected) totalArea += W * H;
+        if (faces.top.selected) totalArea += W * T;
+        if (faces.bottom.selected) totalArea += W * T;
+        if (faces.left.selected) totalArea += H * T;
+        if (faces.right.selected) totalArea += H * T;
+
+        // Convert mm² to m²
+        const areaM2 = totalArea / 1000000;
+
+        // Calculate price
+        const price = areaM2 * pricePerM2;
+
+        // Update displays
+        areaDisplay.textContent = areaM2.toFixed(3) + ' m²';
+        priceDisplay.textContent = '£' + price.toFixed(2);
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+    function validateForm() {
+        let isValid = true;
+
+        // Element type
+        if (!elementTypeSelect.value) {
+            elementTypeSelect.classList.add('input-error');
+            elementTypeError.classList.add('visible');
+            isValid = false;
+        }
+
+        // Price
+        if (!pricePerM2Input.value || parseFloat(pricePerM2Input.value) <= 0) {
+            pricePerM2Input.classList.add('input-error');
+            pricePerM2Error.classList.add('visible');
+            isValid = false;
+        }
+
+        // Dimensions
+        if (!widthInput.value || parseFloat(widthInput.value) <= 0) {
+            widthInput.classList.add('input-error');
+            widthError.classList.add('visible');
+            isValid = false;
+        }
+        if (!heightInput.value || parseFloat(heightInput.value) <= 0) {
+            heightInput.classList.add('input-error');
+            heightError.classList.add('visible');
+            isValid = false;
+        }
+        if (!thicknessInput.value || parseFloat(thicknessInput.value) <= 0) {
+            thicknessInput.classList.add('input-error');
+            thicknessError.classList.add('visible');
+            isValid = false;
+        }
+
+        // At least one face
+        const hasSelectedFace = Object.values(faces).some(f => f.selected);
+        if (!hasSelectedFace) {
+            facesError.classList.add('visible');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // =========================================================
+    // ADD ELEMENT
+    // =========================================================
+    function addElement() {
+        if (!validateForm()) return;
+
+        const W = parseFloat(widthInput.value);
+        const H = parseFloat(heightInput.value);
+        const T = parseFloat(thicknessInput.value);
+
+        let totalArea = 0;
+        if (faces.front.selected) totalArea += W * H;
+        if (faces.back.selected) totalArea += W * H;
+        if (faces.top.selected) totalArea += W * T;
+        if (faces.bottom.selected) totalArea += W * T;
+        if (faces.left.selected) totalArea += H * T;
+        if (faces.right.selected) totalArea += H * T;
+
+        const areaM2 = totalArea / 1000000;
+        const pricePerM2 = parseFloat(pricePerM2Input.value);
+        const price = areaM2 * pricePerM2;
+
+        const element = {
+            id: Date.now(),
+            type: elementTypeSelect.value,
+            width: W,
+            height: H,
+            thickness: T,
+            faces: Object.keys(faces).filter(f => faces[f].selected),
+            area: areaM2,
+            pricePerM2: pricePerM2,
+            paintLocation: paintLocationSelect.value,
+            price: price
+        };
+
+        projectElements.push(element);
+        saveFormToStorage();
+        renderSummaryTable();
+        updateProjectTotal();
+
+        // Clear dimensions
+        widthInput.value = '';
+        heightInput.value = '';
+        thicknessInput.value = '';
+
+        // Reset faces
+        for (const face of Object.keys(faces)) {
+            faces[face].selected = (face === 'front');
+        }
+        updateFaceUI();
+        createDoor();
+    }
+
+    // =========================================================
+    // SUMMARY TABLE
+    // =========================================================
+    function renderSummaryTable() {
+        summaryBody.innerHTML = '';
+
+        if (projectElements.length === 0) {
+            emptyState.style.display = 'block';
+            document.getElementById('summaryTable').style.display = 'none';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        document.getElementById('summaryTable').style.display = 'table';
+
+        projectElements.forEach((elem, index) => {
+            const row = document.createElement('tr');
+            const facesDisplay = elem.faces.map(f => f.charAt(0).toUpperCase()).join(', ');
+
+            row.innerHTML = `
+                <td>${elem.type}</td>
+                <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
+                <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
+                <td>${elem.area.toFixed(3)}</td>
+                <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
+                <td class="price-cell">£${elem.price.toFixed(2)}</td>
+                <td><button class="delete-btn" data-id="${elem.id}" title="Remove element">✕</button></td>
+            `;
+
+            summaryBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = parseInt(this.dataset.id);
+                deleteElement(id);
+            });
+        });
+    }
+
+    function deleteElement(id) {
+        projectElements = projectElements.filter(e => e.id !== id);
+        renderSummaryTable();
+        updateProjectTotal();
+    }
+
+    function updateProjectTotal() {
+        const total = projectElements.reduce((sum, elem) => sum + elem.price, 0);
+        projectTotalDisplay.textContent = '£' + total.toFixed(2);
+    }
+
+    // =========================================================
+    // RESET PROJECT
+    // =========================================================
+    function resetProject() {
+        if (projectElements.length > 0) {
+            if (!confirm('Are you sure you want to reset the project? All elements will be removed.')) {
+                return;
+            }
+        }
+        projectElements = [];
+        renderSummaryTable();
+        updateProjectTotal();
+    }
+
+    // =========================================================
+    // LOCAL STORAGE
     // =========================================================
     function loadFormFromStorage() {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -142,11 +671,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // =========================================================
-    // SAVE FORM DATA TO LOCAL STORAGE
-    // ---------------------------------------------------------
-    // Called after each successful element addition.
-    // =========================================================
     function saveFormToStorage() {
         const data = {
             projectName: projectNameInput.value,
@@ -162,11 +686,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // =========================================================
-    // RAL CODE FIELD VISIBILITY
-    // ---------------------------------------------------------
-    // Shows/hides the RAL code input based on colour standard.
-    // =========================================================
     function updateRalCodeVisibility() {
         const selected = document.querySelector('input[name="colourStandard"]:checked')?.value;
         if (selected === 'RAL') {
@@ -177,600 +696,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // PSEUDO-3D SVG DIAGRAM RENDERING
-    // ---------------------------------------------------------
-    // Creates an isometric-looking 3D box representation of
-    // the element based on width, height, and thickness values.
-    //
-    // The box shows 3 visible faces:
-    // - Front face (main rectangle)
-    // - Top face (parallelogram slanting back)
-    // - Right face (parallelogram slanting back)
-    //
-    // Other faces (back, bottom, left) are controlled via
-    // the legend checkboxes only.
-    // =========================================================
-    function renderSVGDiagram() {
-        // Get current dimension values (default to reasonable values if not set)
-        const W = parseFloat(widthInput.value) || 600;
-        const H = parseFloat(heightInput.value) || 400;
-        const T = parseFloat(thicknessInput.value) || 18;
-
-        // Update dimension display
-        const wDisplay = widthInput.value || '-';
-        const hDisplay = heightInput.value || '-';
-        const tDisplay = thicknessInput.value || '-';
-        dimensionDisplayDims.textContent = `Width: ${wDisplay} mm, Height: ${hDisplay} mm, Thickness: ${tDisplay} mm`;
-
-        // =========================================================
-        // PROPORTIONAL SIZING CALCULATIONS
-        // =========================================================
-
-        // Maximum dimensions for the front rectangle in pixels
-        const maxFrontWidth = 200;
-        const maxFrontHeight = 150;
-
-        // Calculate front rectangle size maintaining aspect ratio
-        const widthToHeightRatio = W / H;
-        let frontWidthPx, frontHeightPx;
-
-        if (widthToHeightRatio >= 1) {
-            frontWidthPx = maxFrontWidth;
-            frontHeightPx = maxFrontWidth / widthToHeightRatio;
-            if (frontHeightPx > maxFrontHeight) {
-                frontHeightPx = maxFrontHeight;
-                frontWidthPx = maxFrontHeight * widthToHeightRatio;
-            }
-        } else {
-            frontHeightPx = maxFrontHeight;
-            frontWidthPx = maxFrontHeight * widthToHeightRatio;
-            if (frontWidthPx > maxFrontWidth) {
-                frontWidthPx = maxFrontWidth;
-                frontHeightPx = maxFrontWidth / widthToHeightRatio;
-            }
-        }
-
-        // Depth calculation
-        const depthFactor = T / Math.max(W, H);
-        let depthPx = frontWidthPx * depthFactor;
-        depthPx = Math.max(12, Math.min(depthPx, 35));
-
-        // Padding and layout
-        const padding = 30;
-        const barGap = 15; // Gap between main model and side bars
-        const barThickness = 20; // Thickness of bottom/left bars
-
-        // Calculate positions
-        const mainModelX = padding + barThickness + barGap;
-        const mainModelY = padding + depthPx;
-
-        // Front face (main rectangle)
-        const frontPoints = [
-            [mainModelX, mainModelY],
-            [mainModelX + frontWidthPx, mainModelY],
-            [mainModelX + frontWidthPx, mainModelY + frontHeightPx],
-            [mainModelX, mainModelY + frontHeightPx]
-        ];
-
-        // Top face
-        const topPoints = [
-            [mainModelX, mainModelY],
-            [mainModelX + depthPx, mainModelY - depthPx],
-            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
-            [mainModelX + frontWidthPx, mainModelY]
-        ];
-
-        // Right face
-        const rightPoints = [
-            [mainModelX + frontWidthPx, mainModelY],
-            [mainModelX + frontWidthPx + depthPx, mainModelY - depthPx],
-            [mainModelX + frontWidthPx + depthPx, mainModelY + frontHeightPx - depthPx],
-            [mainModelX + frontWidthPx, mainModelY + frontHeightPx]
-        ];
-
-        // Back face (hidden behind, shown with dashed outline and arrow)
-        const backX = mainModelX + depthPx;
-        const backY = mainModelY - depthPx;
-        const backPoints = [
-            [backX, backY],
-            [backX + frontWidthPx, backY],
-            [backX + frontWidthPx, backY + frontHeightPx],
-            [backX, backY + frontHeightPx]
-        ];
-
-        // Bottom bar (horizontal bar below main model)
-        const bottomBarY = mainModelY + frontHeightPx + barGap;
-        const bottomBarPoints = [
-            [mainModelX, bottomBarY],
-            [mainModelX + frontWidthPx, bottomBarY],
-            [mainModelX + frontWidthPx, bottomBarY + barThickness],
-            [mainModelX, bottomBarY + barThickness]
-        ];
-
-        // Left bar (vertical bar to the left of main model)
-        const leftBarX = padding;
-        const leftBarPoints = [
-            [leftBarX, mainModelY],
-            [leftBarX + barThickness, mainModelY],
-            [leftBarX + barThickness, mainModelY + frontHeightPx],
-            [leftBarX, mainModelY + frontHeightPx]
-        ];
-
-        // Helper functions
-        function pointsToString(points) {
-            return points.map(p => p.join(',')).join(' ');
-        }
-
-        function getCentroid(points) {
-            const n = points.length;
-            let cx = 0, cy = 0;
-            points.forEach(p => { cx += p[0]; cy += p[1]; });
-            return [cx / n, cy / n];
-        }
-
-        const frontCenter = getCentroid(frontPoints);
-        const topCenter = getCentroid(topPoints);
-        const rightCenter = getCentroid(rightPoints);
-        const backCenter = getCentroid(backPoints);
-        const bottomCenter = getCentroid(bottomBarPoints);
-        const leftCenter = getCentroid(leftBarPoints);
-
-        // Calculate total SVG dimensions
-        const svgWidth = mainModelX + frontWidthPx + depthPx + padding;
-        const svgHeight = bottomBarY + barThickness + padding + 30; // Extra space for label
-
-        // Arrow from back to main model
-        const arrowStartX = backCenter[0];
-        const arrowStartY = backCenter[1];
-        const arrowEndX = frontCenter[0];
-        const arrowEndY = frontCenter[1];
-
-        // =========================================================
-        // BUILD SVG CONTENT
-        // =========================================================
-        const svgContent = `
-        <svg class="element-svg" viewBox="0 0 ${svgWidth} ${svgHeight}"
-             xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#3a4038" stop-opacity="0.95"/>
-                    <stop offset="100%" stop-color="#2f352e" stop-opacity="0.98"/>
-                </linearGradient>
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                    <polygon points="0 0, 10 3, 0 6" fill="#a8b5a0" />
-                </marker>
-            </defs>
-
-            <!-- Background panel -->
-            <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" rx="18" class="scene-backdrop" fill="url(#panelGradient)" />
-            <rect x="12" y="12" width="${svgWidth - 24}" height="${svgHeight - 24}" rx="14" class="scene-grid" />
-
-            <!-- Back face (dashed outline) -->
-            <g class="svg-face-3d svg-face-back ${faces.back.selected ? 'selected' : ''}" data-face="back">
-                <polygon class="face-polygon" points="${pointsToString(backPoints)}" 
-                         stroke-dasharray="5 3" fill-opacity="0.3"/>
-                <text class="face-label-text" x="${backCenter[0]}" y="${backCenter[1]}" fill="#a8b5a0" opacity="0.7">Back</text>
-            </g>
-
-            <!-- Arrow from back to model -->
-            <line x1="${arrowStartX}" y1="${arrowStartY}" 
-                  x2="${arrowEndX}" y2="${arrowEndY}" 
-                  stroke="#a8b5a0" stroke-width="1.5" 
-                  stroke-dasharray="3 2" opacity="0.6"
-                  marker-end="url(#arrowhead)"/>
-
-            <!-- Top face -->
-            <g class="svg-face-3d svg-face-top ${faces.top.selected ? 'selected' : ''}" data-face="top" filter="url(#glow)">
-                <polygon class="face-polygon" points="${pointsToString(topPoints)}"/>
-                <text class="face-label-text" x="${topCenter[0]}" y="${topCenter[1]}">Top</text>
-            </g>
-
-            <!-- Right face -->
-            <g class="svg-face-3d svg-face-right ${faces.right.selected ? 'selected' : ''}" data-face="right" filter="url(#glow)">
-                <polygon class="face-polygon" points="${pointsToString(rightPoints)}"/>
-                <text class="face-label-text" x="${rightCenter[0]}" y="${rightCenter[1]}">Right</text>
-            </g>
-
-            <!-- Front face -->
-            <g class="svg-face-3d svg-face-front ${faces.front.selected ? 'selected' : ''}" data-face="front" filter="url(#glow)">
-                <polygon class="face-polygon" points="${pointsToString(frontPoints)}"/>
-                <text class="face-label-text" x="${frontCenter[0]}" y="${frontCenter[1]}">Front</text>
-            </g>
-
-            <!-- Bottom bar -->
-            <g class="svg-face-3d svg-face-bottom ${faces.bottom.selected ? 'selected' : ''}" data-face="bottom" filter="url(#glow)">
-                <rect class="face-polygon" x="${bottomBarPoints[0][0]}" y="${bottomBarPoints[0][1]}" 
-                      width="${frontWidthPx}" height="${barThickness}" rx="3"/>
-                <text class="face-label-text" x="${bottomCenter[0]}" y="${bottomCenter[1]}">Bottom</text>
-            </g>
-
-            <!-- Left bar -->
-            <g class="svg-face-3d svg-face-left ${faces.left.selected ? 'selected' : ''}" data-face="left" filter="url(#glow)">
-                <rect class="face-polygon" x="${leftBarPoints[0][0]}" y="${leftBarPoints[0][1]}" 
-                      width="${barThickness}" height="${frontHeightPx}" rx="3"/>
-                <text class="face-label-text" x="${leftCenter[0]}" y="${leftCenter[1]}" 
-                      transform="rotate(-90 ${leftCenter[0]} ${leftCenter[1]})">Left</text>
-            </g>
-
-            <!-- 3D edge highlights -->
-            <line class="edge-line-dark"
-                  x1="${mainModelX + frontWidthPx}" y1="${mainModelY}"
-                  x2="${mainModelX + frontWidthPx + depthPx}" y2="${mainModelY - depthPx}"/>
-            <line class="edge-line-dark"
-                  x1="${mainModelX}" y1="${mainModelY}"
-                  x2="${mainModelX + depthPx}" y2="${mainModelY - depthPx}"/>
-
-            <!-- Label under model -->
-            <text x="${svgWidth / 2}" y="${svgHeight - 10}" 
-                  fill="#a8b5a0" font-size="11" text-anchor="middle" font-weight="600">
-                ${wDisplay} × ${hDisplay} × ${tDisplay} mm
-            </text>
-        </svg>`;
-
-        svgDiagramWrapper.innerHTML = svgContent;
-
-        // Add click handlers to all faces
-        const svgFaces = svgDiagramWrapper.querySelectorAll('.svg-face-3d');
-        svgFaces.forEach(face => {
-            face.addEventListener('click', function() {
-                toggleFace(this.dataset.face);
-            });
-        });
-    }
-
-    // =========================================================
-    // FACE SELECTION HANDLERS
-    // ---------------------------------------------------------
-    // Toggles face selection and updates the UI.
-    // =========================================================
-    function updateFaceUI() {
-        // Re-render SVG diagram with current selection state
-        renderSVGDiagram();
-
-        // Update legend items and checkboxes
-        legendItems.forEach(item => {
-            const faceName = item.dataset.face;
-            if (faces[faceName].selected) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-
-        legendCheckboxes.forEach(checkbox => {
-            const faceName = checkbox.dataset.face;
-            checkbox.checked = faces[faceName].selected;
-        });
-
-        // Update selected faces display
-        const selectedNames = Object.keys(faces)
-            .filter(f => faces[f].selected)
-            .map(f => f.charAt(0).toUpperCase() + f.slice(1));
-
-        selectedFacesDisplay.textContent = selectedNames.length > 0
-            ? selectedNames.join(', ')
-            : 'None';
-
-        // Update calculations
-        updateCalculations();
-    }
-
-    function toggleFace(faceName) {
-        faces[faceName].selected = !faces[faceName].selected;
-        updateFaceUI();
-    }
-
-    // =========================================================
-    // AREA CALCULATION
-    // ---------------------------------------------------------
-    // Calculates the total painted area in square meters.
-    //
-    // Formula:
-    // - Convert mm to meters: divide by 1000
-    // - Front/Back area: width * height
-    // - Top/Bottom area: width * thickness
-    // - Left/Right area: height * thickness
-    // - Total = sum of all selected face areas
-    // =========================================================
-    function calculateArea() {
-        const widthMm = parseFloat(widthInput.value) || 0;
-        const heightMm = parseFloat(heightInput.value) || 0;
-        const thicknessMm = parseFloat(thicknessInput.value) || 0;
-
-        // Convert mm to meters
-        const Wm = widthMm / 1000;
-        const Hm = heightMm / 1000;
-        const Tm = thicknessMm / 1000;
-
-        // Calculate area for each face type
-        const faceAreas = {
-            front:  Wm * Hm,
-            back:   Wm * Hm,
-            top:    Wm * Tm,
-            bottom: Wm * Tm,
-            left:   Hm * Tm,
-            right:  Hm * Tm
-        };
-
-        // Sum selected face areas
-        let totalArea = 0;
-        for (const [faceName, faceData] of Object.entries(faces)) {
-            if (faceData.selected) {
-                totalArea += faceAreas[faceName];
-            }
-        }
-
-        return totalArea;
-    }
-
-    // =========================================================
-    // PRICE CALCULATION
-    // ---------------------------------------------------------
-    // Calculates the price based on:
-    // - Element type
-    // - Paint location (internal/external)
-    // - Price level (1, 2, or 3)
-    // - Total painted area
-    //
-    // Formula: price = area (m²) × price per m²
-    // =========================================================
-    function calculatePrice(area) {
-        const pricePerM2 = parseFloat(pricePerM2Input.value);
-
-        if (!pricePerM2 || pricePerM2 <= 0) {
-            return 0;
-        }
-
-        // Calculate total price
-        const totalPrice = area * pricePerM2;
-
-        return totalPrice;
-    }
-
-    // =========================================================
-    // UPDATE CALCULATION DISPLAYS
-    // =========================================================
-    function updateCalculations() {
-        const area = calculateArea();
-        const price = calculatePrice(area);
-
-        areaDisplay.textContent = area.toFixed(3) + ' m²';
-        priceDisplay.textContent = '£' + price.toFixed(2);
-    }
-
-    // =========================================================
-    // FORM VALIDATION
-    // ---------------------------------------------------------
-    // Validates required fields before adding an element.
-    // Returns true if valid, false otherwise.
-    // =========================================================
-    function validateForm() {
-        let isValid = true;
-
-        // Clear previous errors
-        elementTypeSelect.classList.remove('input-error');
-        widthInput.classList.remove('input-error');
-        heightInput.classList.remove('input-error');
-        thicknessInput.classList.remove('input-error');
-        pricePerM2Input.classList.remove('input-error');
-        elementTypeError.classList.remove('visible');
-        widthError.classList.remove('visible');
-        heightError.classList.remove('visible');
-        thicknessError.classList.remove('visible');
-        facesError.classList.remove('visible');
-        pricePerM2Error.classList.remove('visible');
-
-        // Validate element type
-        if (!elementTypeSelect.value) {
-            elementTypeSelect.classList.add('input-error');
-            elementTypeError.classList.add('visible');
-            isValid = false;
-        }
-
-        // Validate price per m²
-        const pricePerM2 = parseFloat(pricePerM2Input.value);
-        if (!pricePerM2 || pricePerM2 <= 0) {
-            pricePerM2Input.classList.add('input-error');
-            pricePerM2Error.classList.add('visible');
-            isValid = false;
-        }
-
-        // Validate dimensions
-        const width = parseFloat(widthInput.value);
-        const height = parseFloat(heightInput.value);
-        const thickness = parseFloat(thicknessInput.value);
-
-        if (!width || width <= 0) {
-            widthInput.classList.add('input-error');
-            widthError.classList.add('visible');
-            isValid = false;
-        }
-
-        if (!height || height <= 0) {
-            heightInput.classList.add('input-error');
-            heightError.classList.add('visible');
-            isValid = false;
-        }
-
-        if (!thickness || thickness <= 0) {
-            thicknessInput.classList.add('input-error');
-            thicknessError.classList.add('visible');
-            isValid = false;
-        }
-
-        // Validate at least one face selected
-        const hasSelectedFace = Object.values(faces).some(f => f.selected);
-        if (!hasSelectedFace) {
-            facesError.classList.add('visible');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    // =========================================================
-    // ADD ELEMENT TO PROJECT
-    // ---------------------------------------------------------
-    // Validates, calculates, and adds the element to the table.
-    // Clears dimensions and face selections after adding.
-    // =========================================================
-    function addElement() {
-        if (!validateForm()) {
-            return;
-        }
-
-        const area = calculateArea();
-        const price = calculatePrice(area);
-
-        const element = {
-            id: Date.now(),
-            type: elementTypeSelect.value,
-            width: parseFloat(widthInput.value),
-            height: parseFloat(heightInput.value),
-            thickness: parseFloat(thicknessInput.value),
-            faces: Object.keys(faces).filter(f => faces[f].selected),
-            area: area,
-            pricePerM2: parseFloat(pricePerM2Input.value),
-            paintLocation: paintLocationSelect.value,
-            price: price
-        };
-
-        projectElements.push(element);
-
-        // Save form to localStorage (excludes dimensions & faces)
-        saveFormToStorage();
-
-        // Update UI
-        renderSummaryTable();
-        updateProjectTotal();
-
-        // Clear dimension fields for next element
-        // NOTE: Face selections are also reset to default (front only)
-        // This makes each element start fresh. Modify below if you prefer
-        // to keep the last face selection.
-        widthInput.value = '';
-        heightInput.value = '';
-        thicknessInput.value = '';
-
-        // Reset faces to default (front only selected)
-        for (const face of Object.keys(faces)) {
-            faces[face].selected = (face === 'front');
-        }
-        updateFaceUI();
-    }
-
-    // =========================================================
-    // RENDER SUMMARY TABLE
-    // ---------------------------------------------------------
-    // Rebuilds the project elements table from the data array.
-    // =========================================================
-    function renderSummaryTable() {
-        summaryBody.innerHTML = '';
-
-        if (projectElements.length === 0) {
-            emptyState.style.display = 'block';
-            document.getElementById('summaryTable').style.display = 'none';
-            return;
-        }
-
-        emptyState.style.display = 'none';
-        document.getElementById('summaryTable').style.display = 'table';
-
-        projectElements.forEach((elem, index) => {
-            const row = document.createElement('tr');
-
-            const facesDisplay = elem.faces
-                .map(f => f.charAt(0).toUpperCase())
-                .join(', ');
-
-            row.innerHTML = `
-                <td>${elem.type}</td>
-                <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
-                <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
-                <td>${elem.area.toFixed(3)}</td>
-                <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
-                <td class="price-cell">£${elem.price.toFixed(2)}</td>
-                <td><button class="delete-btn" data-id="${elem.id}" title="Remove element">✕</button></td>
-            `;
-
-            summaryBody.appendChild(row);
-        });
-
-        // Add delete handlers
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = parseInt(this.dataset.id);
-                deleteElement(id);
-            });
-        });
-    }
-
-    // =========================================================
-    // DELETE ELEMENT
-    // ---------------------------------------------------------
-    // Removes an element from the project by ID.
-    // =========================================================
-    function deleteElement(id) {
-        projectElements = projectElements.filter(e => e.id !== id);
-        renderSummaryTable();
-        updateProjectTotal();
-    }
-
-    // =========================================================
-    // UPDATE PROJECT TOTAL
-    // ---------------------------------------------------------
-    // Calculates and displays the sum of all element prices.
-    // =========================================================
-    function updateProjectTotal() {
-        const total = projectElements.reduce((sum, elem) => sum + elem.price, 0);
-        projectTotalDisplay.textContent = '£' + total.toFixed(2);
-    }
-
-    // =========================================================
-    // RESET PROJECT
-    // ---------------------------------------------------------
-    // Clears all elements from the project.
-    // Keeps form values in localStorage.
-    // =========================================================
-    function resetProject() {
-        if (projectElements.length > 0) {
-            if (!confirm('Are you sure you want to reset the project? All elements will be removed.')) {
-                return;
-            }
-        }
-        projectElements = [];
-        renderSummaryTable();
-        updateProjectTotal();
-    }
-
-    // =========================================================
     // EVENT LISTENERS
     // =========================================================
 
-    // Colour standard radio change
+    // Colour standard
     colourStandardRadios.forEach(radio => {
         radio.addEventListener('change', updateRalCodeVisibility);
     });
 
-    // Legend checkbox changes
+    // Legend checkboxes
     legendCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function(e) {
-            e.stopPropagation(); // Prevent label click from triggering twice
+            e.stopPropagation();
             toggleFace(this.dataset.face);
         });
     });
 
-    // Legend item clicks (on the label area, not checkbox)
+    // Legend items click
     legendItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            // Only toggle if click wasn't on the checkbox itself
             if (e.target.type !== 'checkbox') {
                 e.preventDefault();
                 toggleFace(this.dataset.face);
@@ -778,36 +722,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Dimension inputs - update calculations and re-render diagram on change
+    // Dimension inputs
     [widthInput, heightInput, thicknessInput].forEach(input => {
         input.addEventListener('input', function() {
-            renderSVGDiagram();
+            createDoor();
             updateCalculations();
         });
     });
 
-    // Element type and price changes - update calculations
-    elementTypeSelect.addEventListener('change', updateCalculations);
-    pricePerM2Input.addEventListener('input', updateCalculations);
-    paintLocationSelect.addEventListener('change', updateCalculations);
-
-    // Add element button
-    addElementBtn.addEventListener('click', addElement);
-
-    // Reset project button
-    resetProjectBtn.addEventListener('click', resetProject);
-
-    // Clear validation errors on input
+    // Element type change
     elementTypeSelect.addEventListener('change', function() {
+        createDoor();
+        updateCalculations();
         this.classList.remove('input-error');
         elementTypeError.classList.remove('visible');
     });
 
+    // Price input
     pricePerM2Input.addEventListener('input', function() {
+        updateCalculations();
         this.classList.remove('input-error');
         pricePerM2Error.classList.remove('visible');
     });
 
+    // Paint location
+    paintLocationSelect.addEventListener('change', updateCalculations);
+
+    // Add element
+    addElementBtn.addEventListener('click', addElement);
+
+    // Reset project
+    resetProjectBtn.addEventListener('click', resetProject);
+
+    // Clear validation errors
     [widthInput, heightInput, thicknessInput].forEach((input, index) => {
         input.addEventListener('input', function() {
             this.classList.remove('input-error');
@@ -820,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     loadFormFromStorage();
     updateRalCodeVisibility();
-    renderSVGDiagram();
+    initThreeJS();
     updateFaceUI();
     renderSummaryTable();
     updateProjectTotal();

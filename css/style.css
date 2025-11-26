@@ -293,6 +293,19 @@ input::placeholder {
     align-items: center;
 }
 
+#threeCanvas {
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    cursor: grab;
+}
+
+#threeCanvas:active {
+    cursor: grabbing;
+}
+
 .svg-diagram-wrapper {
     width: 100%;
     height: 260px;
@@ -364,18 +377,22 @@ input::placeholder {
     border-radius: 20px;
     font-size: 0.8rem;
     color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .legend-item:hover { background: #fff; border-color: var(--primary); }
 
 .legend-item.selected {
-    background: var(--primary-light);
-    color: var(--primary);
-    border-color: var(--primary-light);
+    background: #708238;
+    color: white;
+    border-color: #708238;
     font-weight: 600;
 }
 
-.legend-color, .legend-checkbox { display: none; } /* Ukrywamy checkboxy, klikamy w "chipy" */
+.legend-checkbox { display: none; }
 
 /* Calc Result Box */
 .calc-result {
