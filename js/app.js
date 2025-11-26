@@ -715,32 +715,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctx = canvas.getContext('2d');
             const rgb = this.hexToRgb(colorHex);
 
-            // Smooth flat color with very subtle gradient for depth
-            const gradient = ctx.createLinearGradient(0, 0, this.width, this.height);
-            
-            const lighterR = Math.min(255, rgb.r + 5);
-            const lighterG = Math.min(255, rgb.g + 5);
-            const lighterB = Math.min(255, rgb.b + 5);
-            const darkerR = Math.max(0, rgb.r - 3);
-            const darkerG = Math.max(0, rgb.g - 3);
-            const darkerB = Math.max(0, rgb.b - 3);
-            
-            gradient.addColorStop(0, `rgb(${lighterR}, ${lighterG}, ${lighterB})`);
-            gradient.addColorStop(0.5, `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
-            gradient.addColorStop(1, `rgb(${darkerR}, ${darkerG}, ${darkerB})`);
-            
-            ctx.fillStyle = gradient;
+            // Pure flat color - no lightening
+            ctx.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
             ctx.fillRect(0, 0, this.width, this.height);
 
-            // Very minimal noise for realism (not orange peel)
-            for (let i = 0; i < 1000; i++) {
+            // Very minimal noise for realism
+            for (let i = 0; i < 500; i++) {
                 const x = Math.random() * this.width;
                 const y = Math.random() * this.height;
-                const brightness = Math.random() * 4 - 2;
+                const brightness = Math.random() * 6 - 3;
                 const r = Math.min(255, Math.max(0, rgb.r + brightness));
                 const g = Math.min(255, Math.max(0, rgb.g + brightness));
                 const b = Math.min(255, Math.max(0, rgb.b + brightness));
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.1)`;
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.05)`;
                 ctx.fillRect(x, y, 1, 1);
             }
 
@@ -819,22 +806,22 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Light spots from all directions (spread across width for 360 coverage)
+            // Light spots - REDUCED intensity for darker colors
             const spots = [
                 // Front lights
-                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.6 },
-                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
+                { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.35 },
+                { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.3 },
                 // Right side light - closer to front (~20 degrees), lower
-                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.65 },
-                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.55 },
+                { x: canvas.width * 0.3, y: canvas.height * 0.45, radius: 110, intensity: 0.4 },
+                { x: canvas.width * 0.28, y: canvas.height * 0.5, radius: 90, intensity: 0.35 },
                 // Back lights
-                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.5 },
-                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
+                { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.3 },
+                { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.35 },
                 // Left side lights
-                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
-                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                { x: canvas.width * 0.1, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
+                { x: canvas.width * 0.9, y: canvas.height * 0.25, radius: 90, intensity: 0.3 },
                 // Top center
-                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 120, intensity: 0.65 }
+                { x: canvas.width * 0.5, y: canvas.height * 0.08, radius: 120, intensity: 0.4 }
             ];
             
             spots.forEach(spot => {
@@ -897,10 +884,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 normalMap: textures.normal,
                 normalScale: new THREE.Vector2(0.5, 0.5),
                 roughnessMap: textures.roughness,
-                roughness: 0.6,
+                roughness: 0.7,
                 metalness: 0.0,
                 envMap: this.envMap,
-                envMapIntensity: 0.6
+                envMapIntensity: 0.3
             });
 
             this.materialCache[cacheKey] = material;
@@ -920,10 +907,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 normalMap: textures.normal,
                 normalScale: new THREE.Vector2(0.1, 0.1),
                 roughnessMap: textures.roughness,
-                roughness: 0.25, // 25% sheen = lower roughness for more reflection
+                roughness: 0.35,
                 metalness: 0.0,
                 envMap: this.envMap,
-                envMapIntensity: 0.8
+                envMapIntensity: 0.4
             });
 
             this.materialCache[cacheKey] = material;
@@ -1239,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = 0.8;
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1278,8 +1265,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupLighting() {
-        // Key light - front
-        const keyLight = new THREE.DirectionalLight(0xfff8f0, 0.7);
+        // Key light - front - REDUCED
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.4);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
@@ -1294,36 +1281,31 @@ document.addEventListener('DOMContentLoaded', function() {
         scene.add(keyLight);
 
         // Back light - for back face
-        const backLight = new THREE.DirectionalLight(0xf0f0ff, 0.5);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.25);
         backLight.position.set(-3, 6, -8);
         scene.add(backLight);
 
         // Left side light
-        const leftLight = new THREE.DirectionalLight(0xfff5f0, 0.45);
+        const leftLight = new THREE.DirectionalLight(0xffffff, 0.25);
         leftLight.position.set(-8, 5, 2);
         scene.add(leftLight);
 
         // Right side light - LOWER, at element mid-height, 20 degrees from front
-        const rightLight = new THREE.DirectionalLight(0xf0f5ff, 0.6);
+        const rightLight = new THREE.DirectionalLight(0xffffff, 0.35);
         rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
 
         // Top light
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.2);
         topLight.position.set(0, 10, 0);
         scene.add(topLight);
 
-        // Bottom fill light
-        const bottomLight = new THREE.DirectionalLight(0xe0e0e0, 0.2);
-        bottomLight.position.set(0, -5, 3);
-        scene.add(bottomLight);
-
-        // Ambient - subtle
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.35);
+        // Ambient - VERY LOW
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.15);
         scene.add(ambientLight);
 
-        // Hemisphere
-        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.25);
+        // Hemisphere - minimal
+        const hemiLight = new THREE.HemisphereLight(0x404040, 0x101010, 0.1);
         scene.add(hemiLight);
     }
 
