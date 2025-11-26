@@ -824,8 +824,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Front lights
                 { x: canvas.width * 0.25, y: canvas.height * 0.2, radius: 100, intensity: 0.6 },
                 { x: canvas.width * 0.35, y: canvas.height * 0.15, radius: 80, intensity: 0.5 },
-                // Right side lights
-                { x: canvas.width * 0.5, y: canvas.height * 0.25, radius: 90, intensity: 0.55 },
+                // Right side lights - LOWER for mid-height reflection
+                { x: canvas.width * 0.5, y: canvas.height * 0.45, radius: 110, intensity: 0.65 },
+                { x: canvas.width * 0.55, y: canvas.height * 0.5, radius: 90, intensity: 0.55 },
                 // Back lights
                 { x: canvas.width * 0.65, y: canvas.height * 0.2, radius: 85, intensity: 0.5 },
                 { x: canvas.width * 0.75, y: canvas.height * 0.15, radius: 100, intensity: 0.6 },
@@ -1302,9 +1303,9 @@ document.addEventListener('DOMContentLoaded', function() {
         leftLight.position.set(-8, 5, 2);
         scene.add(leftLight);
 
-        // Right side light
-        const rightLight = new THREE.DirectionalLight(0xf0f5ff, 0.45);
-        rightLight.position.set(8, 5, 2);
+        // Right side light - LOWER, at element mid-height for visible reflection
+        const rightLight = new THREE.DirectionalLight(0xf0f5ff, 0.6);
+        rightLight.position.set(8, 1.5, 0);
         scene.add(rightLight);
 
         // Top light
@@ -1324,6 +1325,43 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hemisphere
         const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.25);
         scene.add(hemiLight);
+    }
+
+    // =========================================================
+    // AUTO ZOOM TO FIT ELEMENT IN CONTAINER
+    // =========================================================
+    function autoZoomToFit(width, height, thickness) {
+        // Calculate the diagonal size of the element
+        const maxDimension = Math.max(width, height, thickness);
+        
+        // Base distance for a 1.0 unit element
+        const baseDistance = 3.5;
+        
+        // Scale distance based on element size
+        const requiredDistance = baseDistance * maxDimension;
+        
+        // Clamp between min and max
+        const minDistance = 2;
+        const maxDistance = 8;
+        const targetDistance = Math.max(minDistance, Math.min(maxDistance, requiredDistance));
+        
+        // Get current camera direction
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        direction.negate();
+        
+        // Calculate new camera position
+        const targetY = height * 0.4;
+        const newPosition = new THREE.Vector3(
+            direction.x * targetDistance,
+            targetY + targetDistance * 0.4,
+            direction.z * targetDistance
+        );
+        
+        // Smoothly update camera
+        camera.position.copy(newPosition);
+        controls.target.set(0, targetY, 0);
+        controls.update();
     }
 
     function createFloor() {
@@ -1421,9 +1459,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         scene.add(doorGroup);
 
-        // Adjust camera target
-        controls.target.set(0, H * 0.4, 0);
-        controls.update();
+        // Auto zoom to fit element in container
+        autoZoomToFit(W, H, T);
     }
 
     // =========================================================
