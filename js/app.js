@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ralCodeField = document.getElementById('ralCodeField');
     const ralCodeInput = document.getElementById('ralCode');
     const ralSelect = document.getElementById('ralSelect');
+    const ralColorPreview = document.getElementById('ralColorPreview');
     const sheenSlider = document.getElementById('sheenSlider');
     const sheenValue = document.getElementById('sheenValue');
     const paintManufacturerInput = document.getElementById('paintManufacturer');
@@ -159,6 +160,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
+    // UPDATE RAL COLOR PREVIEW
+    // =========================================================
+    function updateRalPreview() {
+        const ralCode = ralCodeInput.value.trim();
+        if (ralCode && RAL_COLORS[ralCode] && ralColorPreview) {
+            const color = RAL_COLORS[ralCode];
+            ralColorPreview.style.backgroundColor = '#' + color.toString(16).padStart(6, '0');
+        } else if (ralColorPreview) {
+            ralColorPreview.style.backgroundColor = '#708238'; // Default
+        }
+    }
+
+    // =========================================================
     // GET SHEEN LEVEL (0-100 -> roughness 1.0-0.0)
     // =========================================================
     function getSheen() {
@@ -166,6 +180,37 @@ document.addEventListener('DOMContentLoaded', function() {
         // 0% sheen = 1.0 roughness (total matt)
         // 100% sheen = 0.0 roughness (mirror)
         return 1.0 - (sheenPercent / 100);
+    }
+
+    // =========================================================
+    // LIGHT HELPERS - VISUAL MARKERS FOR LIGHT POSITIONS
+    // =========================================================
+    let lightHelpers = [];
+    let showLightHelpers = true;
+
+    function createLightHelper(position, color, name) {
+        const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const material = new THREE.MeshBasicMaterial({ color: color });
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.copy(position);
+        sphere.userData.lightName = name;
+        scene.add(sphere);
+        lightHelpers.push(sphere);
+        return sphere;
+    }
+
+    function toggleLightHelpers() {
+        showLightHelpers = !showLightHelpers;
+        lightHelpers.forEach(helper => {
+            helper.visible = showLightHelpers;
+        });
+    }
+
+    function removeLightHelpers() {
+        lightHelpers.forEach(helper => {
+            scene.remove(helper);
+        });
+        lightHelpers = [];
     }
 
     // =========================================================
@@ -808,13 +853,13 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             
-            // Dark studio gradient for realistic reflections
+            // Lighter studio gradient
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#5a5a5a');
-            gradient.addColorStop(0.3, '#454545');
-            gradient.addColorStop(0.5, '#353535');
-            gradient.addColorStop(0.7, '#2d2d2d');
-            gradient.addColorStop(1, '#1a1a1a');
+            gradient.addColorStop(0, '#6a6a6a');
+            gradient.addColorStop(0.3, '#5a5a5a');
+            gradient.addColorStop(0.5, '#4a4a4a');
+            gradient.addColorStop(0.7, '#3d3d3d');
+            gradient.addColorStop(1, '#2d2d2d');
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1222,9 +1267,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let textureGenerator, materialFactory, envMap;
 
     function initThreeJS() {
-        // Scene - dark gray background (lighter)
+        // Scene - medium gray background (lighter)
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2d2d2d);
+        scene.background = new THREE.Color(0x4a4a4a);
 
         // Camera
         const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
@@ -1281,48 +1326,77 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupLighting() {
-        // Key light - front
+        // Remove old helpers
+        removeLightHelpers();
+
+        // 1. KEY LIGHT - Front top right (main light)
         const keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
-        keyLight.shadow.camera.near = 0.5;
-        keyLight.shadow.camera.far = 25;
-        keyLight.shadow.camera.left = -5;
-        keyLight.shadow.camera.right = 5;
-        keyLight.shadow.camera.top = 5;
-        keyLight.shadow.camera.bottom = -5;
-        keyLight.shadow.bias = -0.0003;
         scene.add(keyLight);
+        createLightHelper(keyLight.position, 0xffff00, '1. KEY (front-top-right)');
 
-        // Back light - for back face
+        // 2. FILL LIGHT - Front left
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        fillLight.position.set(-5, 6, 5);
+        scene.add(fillLight);
+        createLightHelper(fillLight.position, 0x00ff00, '2. FILL (front-left)');
+
+        // 3. BACK LIGHT - Behind object
         const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
         backLight.position.set(-3, 6, -8);
         scene.add(backLight);
+        createLightHelper(backLight.position, 0x0000ff, '3. BACK (behind)');
 
-        // Left side light
+        // 4. LEFT SIDE LIGHT
         const leftLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        leftLight.position.set(-8, 5, 2);
+        leftLight.position.set(-8, 4, 0);
         scene.add(leftLight);
+        createLightHelper(leftLight.position, 0xff00ff, '4. LEFT SIDE');
 
-        // Right side light - LOWER, at element mid-height, 20 degrees from front
+        // 5. RIGHT SIDE LIGHT - Lower, for reflection
         const rightLight = new THREE.DirectionalLight(0xffffff, 0.45);
         rightLight.position.set(3, 1.5, 7);
         scene.add(rightLight);
+        createLightHelper(rightLight.position, 0x00ffff, '5. RIGHT (low-front)');
 
-        // Top light
+        // 6. TOP LIGHT - Directly above
         const topLight = new THREE.DirectionalLight(0xffffff, 0.25);
         topLight.position.set(0, 10, 0);
         scene.add(topLight);
+        createLightHelper(topLight.position, 0xffa500, '6. TOP (above)');
 
-        // Ambient - subtle
+        // 7. BOTTOM FILL - From below
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.15);
+        bottomLight.position.set(0, -5, 3);
+        scene.add(bottomLight);
+        createLightHelper(bottomLight.position, 0x8b4513, '7. BOTTOM (below)');
+
+        // 8. RIM LIGHT - Back edge highlight
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        rimLight.position.set(4, 3, -5);
+        scene.add(rimLight);
+        createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
+
+        // Ambient - subtle fill
         const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
         scene.add(ambientLight);
 
-        // Hemisphere
-        const hemiLight = new THREE.HemisphereLight(0x404040, 0x101010, 0.15);
+        // Hemisphere - sky/ground
+        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.15);
         scene.add(hemiLight);
+
+        console.log('=== LIGHT POSITIONS ===');
+        console.log('1. KEY (yellow):      (5, 10, 7)   - Front top right');
+        console.log('2. FILL (green):      (-5, 6, 5)   - Front left');
+        console.log('3. BACK (blue):       (-3, 6, -8)  - Behind');
+        console.log('4. LEFT (magenta):    (-8, 4, 0)   - Left side');
+        console.log('5. RIGHT (cyan):      (3, 1.5, 7)  - Low front right');
+        console.log('6. TOP (orange):      (0, 10, 0)   - Directly above');
+        console.log('7. BOTTOM (brown):    (0, -5, 3)   - Below');
+        console.log('8. RIM (red):         (4, 3, -5)   - Back right edge');
     }
 
     // =========================================================
@@ -1785,6 +1859,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ralCodeInput.addEventListener('input', function() {
         // Clear select when typing
         if (ralSelect) ralSelect.value = '';
+        updateRalPreview();
         createDoor();
     });
 
@@ -1792,6 +1867,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (ralSelect) {
         ralSelect.addEventListener('change', function() {
             ralCodeInput.value = this.value;
+            updateRalPreview();
             createDoor();
         });
     }
@@ -1802,6 +1878,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (sheenValue) sheenValue.textContent = this.value;
             materialFactory.clearPaintCache();
             createDoor();
+        });
+    }
+
+    // Initialize RAL preview
+    updateRalPreview();
+
+    // Toggle light helpers button
+    const toggleLightsBtn = document.getElementById('toggleLightsBtn');
+    if (toggleLightsBtn) {
+        toggleLightsBtn.addEventListener('click', function() {
+            toggleLightHelpers();
         });
     }
 
