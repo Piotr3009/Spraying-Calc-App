@@ -15,15 +15,15 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div class="hero-pill">Professional Tool</div>
-                <h1 style="margin: 0;">Spray Painting Calculator</h1>
-            </div>
-        </header>
-
         <div class="main-layout">
             <div class="left-panel">
+                <header style="margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="hero-pill">Professional Tool</div>
+                        <h1 style="margin: 0;">Spray Painting Calculator</h1>
+                    </div>
+                </header>
+
                 <div class="card">
                     <h2 class="card-title">1. Project Details</h2>
                     
@@ -43,9 +43,9 @@
                     <h2 class="card-title" style="margin-top: 12px;">2. Specifications</h2>
                     
                     <div class="form-section">
-                        <!-- Colour + RAL w jednej linii -->
-                        <div style="display: grid; grid-template-columns: auto 2fr 1fr 40px; gap: 8px; align-items: end; margin-bottom: 12px;">
-                            <label style="margin: 0; padding-bottom: 8px; font-size: 0.875rem;">Colour</label>
+                        <!-- Colour + Sheen w jednej linii -->
+                        <div style="display: grid; grid-template-columns: auto 1.5fr 80px 40px auto 200px; gap: 8px; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0; font-size: 0.85rem;">Colour</label>
                             <select id="ralSelect" style="padding: 6px 8px; font-size: 0.85rem;">
                                 <option value="">Select RAL...</option>
                                         <option value="1000">RAL 1000 - Green Beige</option>
@@ -238,24 +238,9 @@
                                     </select>
                                     <input type="text" id="ralCode" placeholder="or code" style="padding: 6px 8px; font-size: 0.85rem;">
                                     <div id="ralColorPreview" class="ral-color-preview" style="width: 40px; height: 34px;"></div>
+                                    <label style="margin: 0; font-size: 0.85rem;">Sheen: <span id="sheenValue">30</span>%</label>
+                                    <input type="range" id="sheenSlider" min="0" max="100" value="30" class="sheen-slider" style="width: 200px;">
                                 </div>
-
-                        <!-- Sheen Level - skompresowany -->
-                        <div style="margin-bottom: 8px;">
-                            <label for="sheenSlider" style="font-size: 0.875rem; margin-bottom: 4px;">Sheen: <span id="sheenValue">30</span>%</label>
-                            <div class="sheen-slider-container" style="gap: 8px; margin: 4px 0;">
-                                <span class="sheen-label" style="font-size: 0.7rem;">Matt</span>
-                                <input type="range" id="sheenSlider" min="0" max="100" value="30" class="sheen-slider">
-                                <span class="sheen-label" style="font-size: 0.7rem;">Gloss</span>
-                            </div>
-                            <div class="sheen-scale" style="font-size: 0.6rem;">
-                                <span>0% Dead Matt</span>
-                                <span>30% Eggshell</span>
-                                <span>50% Satin</span>
-                                <span>70% Semi-Gloss</span>
-                                <span>100% Mirror</span>
-                            </div>
-                        </div>
                     </div>
 
                     <h2 class="card-title" style="margin-top: 12px;">3. Element Configuration</h2>
@@ -328,17 +313,9 @@
             </div>
 
             <div class="right-panel">
-                <div class="card">
-                    <div class="card-title-row">
-                        <h2 class="card-title">Interactive Preview</h2>
-                        <span class="title-badge">Live</span>
-                    </div>
-                    
-                    <p class="section-lede">Click faces below to include them in the calculation.</p>
-
-                    <div class="visualisation-container">
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div class="visualisation-container" style="margin: 0;">
                         <canvas id="threeCanvas"></canvas>
-                        <p class="canvas-instruction">Double-click on surface to change paint color</p>
                         
                         <div class="light-controls">
                             <button class="btn btn-small" id="toggleLightsBtn">Show/Hide Light Points</button>

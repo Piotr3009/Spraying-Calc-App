@@ -7,19 +7,100 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
-    // PRICE TABLE CONFIGURATION
+    // PRICING SYSTEM - BASE + PERCENTAGE MULTIPLIERS
     // =========================================================
-    const priceTable = {
-        "MDF": { internal: [22, 27, 32], external: [27, 33, 39] },
-        "Flat": { internal: [25, 30, 35], external: [30, 36, 42] },
-        "Shaker": { internal: [32, 38, 44], external: [38, 45, 52] },
-        "Veneer": { internal: [28, 34, 40], external: [34, 41, 48] },
-        "Timber": { internal: [35, 42, 49], external: [42, 50, 58] },
-        "V-carve front (dense pattern)": { internal: [45, 54, 63], external: [54, 65, 76] },
-        "Door frame": { internal: [30, 36, 42], external: [36, 43, 50] },
-        "Sash window (3 elements)": { internal: [55, 66, 77], external: [66, 79, 92] },
-        "3D furniture panel": { internal: [48, 58, 68], external: [58, 70, 82] }
+    const PRICING_CONFIG = {
+        basePrice: 50, // £50/m² - base price
+        
+        // Material multipliers (percentage)
+        materialMultipliers: {
+            "MDF": 0,           // 0% - base
+            "Flat": 5,          // +5%
+            "Shaker": 25,       // +25%
+            "Veneer": 15,       // +15%
+            "Timber": 30,       // +30%
+            "V-carve front (dense pattern)": 50,  // +50%
+            "Door frame": 20,   // +20%
+            "Sash window (3 elements)": 60,  // +60%
+            "3D furniture panel": 45  // +45%
+        },
+        
+        // Color categories (RAL codes)
+        colorCategories: {
+            standard: [  // 0% - standard colors
+                '9001', '9002', '9003', '9010', '9016', '9018',  // Whites/Creams
+                '7035', '7036', '7038', '7040', '7042', '7044'   // Light grays
+            ],
+            premium: [   // +15% - premium colors
+                '5017', '5015', '5014', '5013', '5012', '5011',  // Blues
+                '6005', '6011', '6021', '6029',                  // Greens
+                '3000', '3001', '3002', '3003', '3004'           // Reds
+            ],
+            special: [   // +30% - special/metallic colors
+                '1036', '8014', '8017', '8019',                  // Metallics/Browns
+                '9005', '9011', '9017'                           // Blacks
+            ]
+        },
+        
+        // Sheen level multipliers (percentage)
+        sheenMultipliers: {
+            0: 0,      // Dead Matt: 0%
+            30: 5,     // Eggshell: +5%
+            50: 10,    // Satin: +10%
+            70: 15,    // Semi-Gloss: +15%
+            100: 20    // Mirror: +20%
+        }
     };
+    
+    // Helper function to get color category multiplier
+    function getColorMultiplier(ralCode) {
+        if (!ralCode) return 0;
+        
+        if (PRICING_CONFIG.colorCategories.standard.includes(ralCode)) {
+            return 0;  // Standard
+        } else if (PRICING_CONFIG.colorCategories.premium.includes(ralCode)) {
+            return 15; // Premium
+        } else if (PRICING_CONFIG.colorCategories.special.includes(ralCode)) {
+            return 30; // Special
+        } else {
+            return 10; // Default - other colors (premium-ish)
+        }
+    }
+    
+    // Helper function to get sheen multiplier (interpolated)
+    function getSheenMultiplier(sheenValue) {
+        const thresholds = [0, 30, 50, 70, 100];
+        const multipliers = [0, 5, 10, 15, 20];
+        
+        // Find the two closest thresholds
+        for (let i = 0; i < thresholds.length - 1; i++) {
+            if (sheenValue >= thresholds[i] && sheenValue <= thresholds[i + 1]) {
+                // Linear interpolation
+                const t = (sheenValue - thresholds[i]) / (thresholds[i + 1] - thresholds[i]);
+                return multipliers[i] + t * (multipliers[i + 1] - multipliers[i]);
+            }
+        }
+        return 0;
+    }
+    
+    // Calculate final price per m²
+    function calculatePricePerM2(materialType, ralCode, sheenValue) {
+        let price = PRICING_CONFIG.basePrice;
+        
+        // Apply material multiplier
+        const materialMult = PRICING_CONFIG.materialMultipliers[materialType] || 0;
+        price = price * (1 + materialMult / 100);
+        
+        // Apply color multiplier
+        const colorMult = getColorMultiplier(ralCode);
+        price = price * (1 + colorMult / 100);
+        
+        // Apply sheen multiplier
+        const sheenMult = getSheenMultiplier(sheenValue);
+        price = price * (1 + sheenMult / 100);
+        
+        return price;
+    }
 
     // =========================================================
     // RAL COLOR DATABASE
@@ -1634,7 +1715,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const W = parseFloat(widthInput.value) || 0;
         const H = parseFloat(heightInput.value) || 0;
         const T = parseFloat(thicknessInput.value) || 0;
-        const pricePerM2 = 50; // Default fixed price - will be set automatically
+        
+        // Get current settings
+        const materialType = elementTypeSelect.value || 'MDF';
+        const ralCode = ralCodeInput.value.trim();
+        const sheenValue = parseInt(sheenSlider.value) || 0;
+        
+        // Calculate price per m² based on material, color, and sheen
+        const pricePerM2 = calculatePricePerM2(materialType, ralCode, sheenValue);
 
         let totalArea = 0;
         if (faces.front.selected) totalArea += W * H;
@@ -1709,19 +1797,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (faces.right.selected) totalArea += H * T;
 
         const areaM2 = totalArea / 1000000;
-        const pricePerM2 = 50; // Fixed default price
+        
+        // Get current settings for price calculation
+        const materialType = elementTypeSelect.value;
+        const ralCode = ralCodeInput.value.trim();
+        const sheenValue = parseInt(sheenSlider.value) || 0;
+        
+        // Calculate price per m² based on material, color, and sheen
+        const pricePerM2 = calculatePricePerM2(materialType, ralCode, sheenValue);
         const price = areaM2 * pricePerM2;
 
         const element = {
             id: Date.now(),
-            type: elementTypeSelect.value,
+            type: materialType,
             width: W,
             height: H,
             thickness: T,
             faces: Object.keys(faces).filter(f => faces[f].selected),
             area: areaM2,
             pricePerM2: pricePerM2,
-            // paintLocation removed
+            ralCode: ralCode,
+            sheenValue: sheenValue,
             price: price
         };
 
@@ -1849,6 +1945,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ralSelect) ralSelect.value = '';
         updateRalPreview();
         createDoor();
+        updateCalculations();  // Recalculate price when color changes
     });
 
     // RAL Select change
@@ -1857,6 +1954,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ralCodeInput.value = this.value;
             updateRalPreview();
             createDoor();
+            updateCalculations();  // Recalculate price when color changes
         });
     }
 
@@ -1866,6 +1964,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (sheenValue) sheenValue.textContent = this.value;
             materialFactory.clearPaintCache();
             createDoor();
+            updateCalculations();  // Recalculate price when sheen changes
         });
     }
 
