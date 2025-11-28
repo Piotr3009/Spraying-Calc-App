@@ -16,9 +16,10 @@
 <body>
     <div class="container">
         <header>
-            <div class="hero-pill">Professional Tool</div>
-            <h1>Spray Painting Calculator</h1>
-            <p>Configure dimensions and materials to get an instant quote.</p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="hero-pill">Professional Tool</div>
+                <h1 style="margin: 0;">Spray Painting Calculator</h1>
+            </div>
         </header>
 
         <div class="main-layout">
@@ -39,34 +40,14 @@
                         </div>
                     </div>
 
-                    <h2 class="card-title" style="margin-top: 16px;">2. Specifications</h2>
+                    <h2 class="card-title" style="margin-top: 12px;">2. Specifications</h2>
                     
                     <div class="form-section">
-                        <div class="form-group">
-                            <label for="colourName">Colour</label>
-                            <input type="text" id="colourName" placeholder="Colour name or code">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Standard</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="colourStandard" value="RAL" checked>
-                                    <span>RAL Standard</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="colourStandard" value="Custom">
-                                    <span>Custom Match</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="conditional-field visible" id="ralCodeField">
-                            <div class="form-group">
-                                <label for="ralCode">RAL Code</label>
-                                <div class="ral-input-group">
-                                    <select id="ralSelect">
-                                        <option value="">Select RAL...</option>
+                        <!-- Colour + RAL w jednej linii -->
+                        <div style="display: grid; grid-template-columns: auto 2fr 1fr 40px; gap: 8px; align-items: end; margin-bottom: 12px;">
+                            <label style="margin: 0; padding-bottom: 8px; font-size: 0.875rem;">Colour</label>
+                            <select id="ralSelect" style="padding: 6px 8px; font-size: 0.85rem;">
+                                <option value="">Select RAL...</option>
                                         <option value="1000">RAL 1000 - Green Beige</option>
                                         <option value="1001">RAL 1001 - Beige</option>
                                         <option value="1002">RAL 1002 - Sand Yellow</option>
@@ -255,20 +236,19 @@
                                         <option value="9017">RAL 9017 - Traffic Black</option>
                                         <option value="9018">RAL 9018 - Papyrus White</option>
                                     </select>
-                                    <input type="text" id="ralCode" placeholder="or type code">
-                                    <div id="ralColorPreview" class="ral-color-preview"></div>
+                                    <input type="text" id="ralCode" placeholder="or code" style="padding: 6px 8px; font-size: 0.85rem;">
+                                    <div id="ralColorPreview" class="ral-color-preview" style="width: 40px; height: 34px;"></div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="form-group" style="margin-top: 16px;">
-                            <label for="sheenSlider">Sheen Level: <span id="sheenValue">30</span>%</label>
-                            <div class="sheen-slider-container">
-                                <span class="sheen-label">Matt</span>
+                        <!-- Sheen Level - skompresowany -->
+                        <div style="margin-bottom: 8px;">
+                            <label for="sheenSlider" style="font-size: 0.875rem; margin-bottom: 4px;">Sheen: <span id="sheenValue">30</span>%</label>
+                            <div class="sheen-slider-container" style="gap: 8px; margin: 4px 0;">
+                                <span class="sheen-label" style="font-size: 0.7rem;">Matt</span>
                                 <input type="range" id="sheenSlider" min="0" max="100" value="30" class="sheen-slider">
-                                <span class="sheen-label">Gloss</span>
+                                <span class="sheen-label" style="font-size: 0.7rem;">Gloss</span>
                             </div>
-                            <div class="sheen-scale">
+                            <div class="sheen-scale" style="font-size: 0.6rem;">
                                 <span>0% Dead Matt</span>
                                 <span>30% Eggshell</span>
                                 <span>50% Satin</span>
@@ -276,70 +256,48 @@
                                 <span>100% Mirror</span>
                             </div>
                         </div>
-
-                        <div class="dimension-row" style="margin-top: 20px;">
-                            <div class="form-group">
-                                <label for="paintManufacturer">Manufacturer</label>
-                                <input type="text" id="paintManufacturer" placeholder="Brand">
-                            </div>
-                            <div class="form-group">
-                                <label for="paintLocation">Location</label>
-                                <select id="paintLocation">
-                                    <option value="internal">Internal</option>
-                                    <option value="external">External</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
 
-                    <h2 class="card-title" style="margin-top: 16px;">3. Element Configuration</h2>
+                    <h2 class="card-title" style="margin-top: 12px;">3. Element Configuration</h2>
                     
                     <div class="form-section">
-                        <div class="form-group">
-                            <label for="elementType">Material / Style</label>
-                            <select id="elementType">
-                                <option value="">Select type...</option>
-                                <option value="MDF">MDF Panel</option>
-                                <option value="Flat">Flat Panel</option>
-                                <option value="Shaker">Shaker Style</option>
-                                <option value="Veneer">Veneer</option>
-                                <option value="Timber">Solid Timber</option>
-                                <option value="V-carve front (dense pattern)">V-Carve (Dense)</option>
-                                <option value="Door frame">Door Frame</option>
-                                <option value="Sash window (3 elements)">Sash Window</option>
-                                <option value="3D furniture panel">3D Panel</option>
-                            </select>
-                            <span class="error-msg" id="elementTypeError">Required</span>
-                        </div>
-                        <div class="form-group">
-                            <label for="pricePerM2">Base Price (£/m²)</label>
-                            <input type="number" id="pricePerM2" min="0" step="0.01" placeholder="0.00">
-                            <span class="error-msg" id="pricePerM2Error">Required</span>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <div class="section-label">Dimensions (mm)</div>
-                        <div class="dimension-row">
-                            <div class="form-group">
-                                <label for="width">Width</label>
-                                <input type="number" id="width" min="1" step="1" placeholder="mm">
+                        <!-- Material/Style + Dimensions w jednej linii -->
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; align-items: end;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="elementType" style="margin-bottom: 4px; font-size: 0.85rem;">Material / Style</label>
+                                <select id="elementType" style="padding: 6px 8px; font-size: 0.85rem;">
+                                    <option value="">Select type...</option>
+                                    <option value="MDF">MDF Panel</option>
+                                    <option value="Flat">Flat Panel</option>
+                                    <option value="Shaker">Shaker Style</option>
+                                    <option value="Veneer">Veneer</option>
+                                    <option value="Timber">Solid Timber</option>
+                                    <option value="V-carve front (dense pattern)">V-Carve (Dense)</option>
+                                    <option value="Door frame">Door Frame</option>
+                                    <option value="Sash window (3 elements)">Sash Window</option>
+                                    <option value="3D furniture panel">3D Panel</option>
+                                </select>
+                                <span class="error-msg" id="elementTypeError">Required</span>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="width" style="margin-bottom: 4px; font-size: 0.85rem;">Width (mm)</label>
+                                <input type="number" id="width" min="1" step="1" placeholder="mm" style="padding: 6px 8px; font-size: 0.85rem;">
                                 <span class="error-msg" id="widthError">!</span>
                             </div>
-                            <div class="form-group">
-                                <label for="height">Height</label>
-                                <input type="number" id="height" min="1" step="1" placeholder="mm">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="height" style="margin-bottom: 4px; font-size: 0.85rem;">Height (mm)</label>
+                                <input type="number" id="height" min="1" step="1" placeholder="mm" style="padding: 6px 8px; font-size: 0.85rem;">
                                 <span class="error-msg" id="heightError">!</span>
                             </div>
-                            <div class="form-group">
-                                <label for="thickness">Thickness</label>
-                                <input type="number" id="thickness" min="1" step="1" placeholder="mm">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="thickness" style="margin-bottom: 4px; font-size: 0.85rem;">Thick. (mm)</label>
+                                <input type="number" id="thickness" min="1" step="1" placeholder="mm" style="padding: 6px 8px; font-size: 0.85rem;">
                                 <span class="error-msg" id="thicknessError">!</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="button-group">
+                    <div class="button-group" style="margin-top: 12px; padding-top: 12px;">
                         <button class="btn btn-secondary" id="resetProjectBtn">Reset</button>
                         <button class="btn btn-primary" id="addElementBtn">Add to Quote (+)</button>
                     </div>

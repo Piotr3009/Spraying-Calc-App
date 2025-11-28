@@ -100,18 +100,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     const projectNameInput = document.getElementById('projectName');
     const clientSiteInput = document.getElementById('clientSite');
-    const colourNameInput = document.getElementById('colourName');
-    const colourStandardRadios = document.querySelectorAll('input[name="colourStandard"]');
-    const ralCodeField = document.getElementById('ralCodeField');
+    // const colourNameInput = document.getElementById('colourName'); // REMOVED
+    // const colourStandardRadios = document.querySelectorAll('input[name="colourStandard"]'); // REMOVED
+    // const ralCodeField = document.getElementById('ralCodeField'); // REMOVED - not conditional anymore
     const ralCodeInput = document.getElementById('ralCode');
     const ralSelect = document.getElementById('ralSelect');
     const ralColorPreview = document.getElementById('ralColorPreview');
     const sheenSlider = document.getElementById('sheenSlider');
     const sheenValue = document.getElementById('sheenValue');
-    const paintManufacturerInput = document.getElementById('paintManufacturer');
-    const paintLocationSelect = document.getElementById('paintLocation');
+    // const paintManufacturerInput = document.getElementById('paintManufacturer'); // REMOVED
+    // const paintLocationSelect = document.getElementById('paintLocation'); // REMOVED
     const elementTypeSelect = document.getElementById('elementType');
-    const pricePerM2Input = document.getElementById('pricePerM2');
+    // const pricePerM2Input = document.getElementById('pricePerM2'); // REMOVED - will use default value
     const widthInput = document.getElementById('width');
     const heightInput = document.getElementById('height');
     const thicknessInput = document.getElementById('thickness');
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const heightError = document.getElementById('heightError');
     const thicknessError = document.getElementById('thicknessError');
     const facesError = document.getElementById('facesError');
-    const pricePerM2Error = document.getElementById('pricePerM2Error');
+    // const pricePerM2Error = document.getElementById('pricePerM2Error'); // REMOVED
 
     const STORAGE_KEY = 'sprayCalcLastForm';
 
@@ -149,12 +149,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // GET SELECTED PAINT COLOR
     // =========================================================
     function getSelectedPaintColor() {
-        const colourStandard = document.querySelector('input[name="colourStandard"]:checked')?.value;
-        if (colourStandard === 'RAL') {
-            const ralCode = ralCodeInput.value.trim();
-            if (ralCode && RAL_COLORS[ralCode]) {
-                return RAL_COLORS[ralCode];
-            }
+        // Always use RAL (no more custom match option)
+        const ralCode = ralCodeInput.value.trim();
+        if (ralCode && RAL_COLORS[ralCode]) {
+            return RAL_COLORS[ralCode];
         }
         return 0x708238; // Default olive
     }
@@ -1636,7 +1634,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const W = parseFloat(widthInput.value) || 0;
         const H = parseFloat(heightInput.value) || 0;
         const T = parseFloat(thicknessInput.value) || 0;
-        const pricePerM2 = parseFloat(pricePerM2Input.value) || 0;
+        const pricePerM2 = 50; // Default fixed price - will be set automatically
 
         let totalArea = 0;
         if (faces.front.selected) totalArea += W * H;
@@ -1665,11 +1663,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        if (!pricePerM2Input.value || parseFloat(pricePerM2Input.value) <= 0) {
-            pricePerM2Input.classList.add('input-error');
-            pricePerM2Error.classList.add('visible');
-            isValid = false;
-        }
+        // pricePerM2 validation removed - using fixed default value
 
         if (!widthInput.value || parseFloat(widthInput.value) <= 0) {
             widthInput.classList.add('input-error');
@@ -1715,7 +1709,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (faces.right.selected) totalArea += H * T;
 
         const areaM2 = totalArea / 1000000;
-        const pricePerM2 = parseFloat(pricePerM2Input.value);
+        const pricePerM2 = 50; // Fixed default price
         const price = areaM2 * pricePerM2;
 
         const element = {
@@ -1727,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', function() {
             faces: Object.keys(faces).filter(f => faces[f].selected),
             area: areaM2,
             pricePerM2: pricePerM2,
-            paintLocation: paintLocationSelect.value,
+            // paintLocation removed
             price: price
         };
 
@@ -1771,7 +1765,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
                 <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
                 <td>${elem.area.toFixed(3)}</td>
-                <td>${elem.paintLocation.charAt(0).toUpperCase() + elem.paintLocation.slice(1)}</td>
                 <td class="price-cell">£${elem.price.toFixed(2)}</td>
                 <td><button class="delete-btn" data-id="${elem.id}" title="Remove">✕</button></td>
             `;
@@ -1816,17 +1809,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = JSON.parse(saved);
                 if (data.projectName) projectNameInput.value = data.projectName;
                 if (data.clientSite) clientSiteInput.value = data.clientSite;
-                if (data.colourName) colourNameInput.value = data.colourName;
-                if (data.colourStandard) {
-                    const radio = document.querySelector(`input[name="colourStandard"][value="${data.colourStandard}"]`);
-                    if (radio) radio.checked = true;
-                    updateRalCodeVisibility();
-                }
+                // colourName removed
+                // colourStandard removed
                 if (data.ralCode) ralCodeInput.value = data.ralCode;
-                if (data.paintManufacturer) paintManufacturerInput.value = data.paintManufacturer;
-                if (data.paintLocation) paintLocationSelect.value = data.paintLocation;
+                // paintManufacturer removed
+                // paintLocation removed
                 if (data.elementType) elementTypeSelect.value = data.elementType;
-                if (data.pricePerM2) pricePerM2Input.value = data.pricePerM2;
+                // pricePerM2 removed - using fixed value
             } catch (e) {
                 console.warn('Failed to load form:', e);
             }
@@ -1837,31 +1826,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = {
             projectName: projectNameInput.value,
             clientSite: clientSiteInput.value,
-            colourName: colourNameInput.value,
-            colourStandard: document.querySelector('input[name="colourStandard"]:checked')?.value,
+            // colourName removed
+            // colourStandard removed
             ralCode: ralCodeInput.value,
-            paintManufacturer: paintManufacturerInput.value,
-            paintLocation: paintLocationSelect.value,
+            // paintManufacturer removed
+            // paintLocation removed
             elementType: elementTypeSelect.value,
-            pricePerM2: pricePerM2Input.value
+            // pricePerM2 removed - using fixed value
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    function updateRalCodeVisibility() {
-        const selected = document.querySelector('input[name="colourStandard"]:checked')?.value;
-        ralCodeField.classList.toggle('visible', selected === 'RAL');
-    }
+    // updateRalCodeVisibility removed - RAL always visible now
 
     // =========================================================
     // EVENT LISTENERS
     // =========================================================
-    colourStandardRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            updateRalCodeVisibility();
-            createDoor();
-        });
-    });
+    // colourStandardRadios event listeners removed - no more radio buttons
 
     ralCodeInput.addEventListener('input', function() {
         // Clear select when typing
@@ -1930,13 +1911,9 @@ document.addEventListener('DOMContentLoaded', function() {
         elementTypeError.classList.remove('visible');
     });
 
-    pricePerM2Input.addEventListener('input', function() {
-        updateCalculations();
-        this.classList.remove('input-error');
-        pricePerM2Error.classList.remove('visible');
-    });
+    // pricePerM2Input event listener removed - using fixed value
+    // paintLocationSelect event listener removed
 
-    paintLocationSelect.addEventListener('change', updateCalculations);
     addElementBtn.addEventListener('click', addElement);
     resetProjectBtn.addEventListener('click', resetProject);
 
