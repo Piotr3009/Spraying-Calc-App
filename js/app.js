@@ -1022,9 +1022,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 normalScale: new THREE.Vector2(0.5, 0.5),
                 roughnessMap: textures.roughness,
                 roughness: 0.7,
-                metalness: 0.0,
-                envMap: this.envMap,
-                envMapIntensity: 0.3
+                metalness: 0.0
+                // NO envMap - preserves natural wood color
             });
 
             this.materialCache[cacheKey] = material;
@@ -1038,19 +1037,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textures = this.textureGenerator.createPaintedTextures(colorHex);
-            
-            // Lower envMapIntensity to preserve dark colors
-            const envIntensity = 0.1 + (1 - roughness) * 0.3; // 0.1 for matt, 0.4 for mirror
 
             const material = new THREE.MeshStandardMaterial({
                 map: textures.diffuse,
                 normalMap: textures.normal,
                 normalScale: new THREE.Vector2(0.1, 0.1),
-                roughnessMap: null, // Use direct roughness value
-                roughness: roughness,
-                metalness: roughness < 0.1 ? 0.05 : 0.0, // Less metalness
-                envMap: this.envMap,
-                envMapIntensity: envIntensity
+                roughnessMap: null,
+                roughness: roughness, // User-controlled via sheen slider
+                metalness: 0.0  // Zero metalness for accurate RAL color reproduction
+                // NO envMap - critical for accurate RAL color display
             });
 
             this.materialCache[cacheKey] = material;
@@ -1343,12 +1338,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // THREE.JS INITIALIZATION
     // =========================================================
-    let textureGenerator, materialFactory, envMap;
+    let textureGenerator, materialFactory;
 
     function initThreeJS() {
-        // Scene - medium gray background (lighter)
+        // Scene - neutral gray background for accurate RAL color perception
+        // #C6C6C6 is the professional standard (Munsell N5-N7 equivalent)
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x4a4a4a);
+        scene.background = new THREE.Color(0xC6C6C6);
 
         // Camera
         const aspect = threeCanvas.clientWidth / threeCanvas.clientHeight;
@@ -1366,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.7;
+        renderer.toneMappingExposure = 1.0;  // Adjusted for new lighting setup
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1378,13 +1374,13 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.maxPolarAngle = Math.PI * 0.85;
         controls.target.set(0, 0.5, 0);
 
-        // Environment map
-        envMap = EnvironmentGenerator.createStudioEnvironment(renderer);
-        scene.environment = envMap;
+        // NO ENVIRONMENT MAP for accurate RAL colors
+        // scene.environment = null - no HDRI, no reflections that distort color
+        scene.environment = null;
 
-        // Texture generator & material factory
+        // Texture generator & material factory (without envMap)
         textureGenerator = new ProceduralTextureGenerator(512, 512);
-        materialFactory = new MaterialFactory(textureGenerator, envMap);
+        materialFactory = new MaterialFactory(textureGenerator, null);
 
         // Lighting
         setupLighting();
@@ -1408,81 +1404,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove old helpers
         removeLightHelpers();
 
-        // 1. KEY LIGHT - Front top right (main light) - VERY DIM
-        const keyLight = new THREE.DirectionalLight(0xffffff, 0.12);
-        keyLight.position.set(5, 10, 7);
+        // ============================================================
+        // PROFESSIONAL RAL COLOR LIGHTING SETUP
+        // Based on studio lighting for accurate color reproduction
+        // ============================================================
+
+        // 1. KEY LIGHT - Main directional light from front-top-right
+        // Position: 45° angle, provides main illumination and natural shadow
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        keyLight.position.set(2, 2, 2);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         scene.add(keyLight);
-        createLightHelper(keyLight.position, 0xffff00, '1. KEY (front-top-right)');
+        createLightHelper(keyLight.position, 0xffff00, '1. KEY (1.0)');
 
-        // 2. FILL LIGHT - Front left - VERY DIM
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.06);
-        fillLight.position.set(-5, 6, 5);
+        // 2. FILL LIGHT - Softens shadows, from front-left
+        // Lower intensity to maintain color accuracy
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        fillLight.position.set(-2, 2, 2);
         scene.add(fillLight);
-        createLightHelper(fillLight.position, 0x00ff00, '2. FILL (front-left)');
+        createLightHelper(fillLight.position, 0x00ff00, '2. FILL (0.5)');
 
-        // 3. BACK LIGHT - Behind object - VERY DIM
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.06);
-        backLight.position.set(-3, 6, -8);
-        scene.add(backLight);
-        createLightHelper(backLight.position, 0x0000ff, '3. BACK (behind)');
-
-        // 4. LEFT SIDE LIGHT - VERY DIM
-        const leftLight = new THREE.DirectionalLight(0xffffff, 0.06);
-        leftLight.position.set(-8, 4, 0);
-        scene.add(leftLight);
-        createLightHelper(leftLight.position, 0xff00ff, '4. LEFT SIDE');
-
-        // 5. RIGHT SIDE LIGHT - Lower, for reflection - VERY DIM
-        const rightLight = new THREE.DirectionalLight(0xffffff, 0.08);
-        rightLight.position.set(3, 1.5, 7);
-        scene.add(rightLight);
-        createLightHelper(rightLight.position, 0x00ffff, '5. RIGHT (low-front)');
-
-        // 6. TOP LIGHT - Directly above - VERY DIM
-        const topLight = new THREE.DirectionalLight(0xffffff, 0.05);
-        topLight.position.set(0, 10, 0);
-        scene.add(topLight);
-        createLightHelper(topLight.position, 0xffa500, '6. TOP (above)');
-
-        // 7. BOTTOM FILL - From below - VERY DIM
-        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.03);
-        bottomLight.position.set(0, -5, 3);
-        scene.add(bottomLight);
-        createLightHelper(bottomLight.position, 0x8b4513, '7. BOTTOM (below)');
-
-        // 8. RIM LIGHT - Back edge highlight - VERY DIM
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.08);
-        rimLight.position.set(4, 3, -5);
+        // 3. RIM LIGHT - Back highlight, defines edges
+        // Subtle intensity to avoid color contamination
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        rimLight.position.set(0, 3, -2);
         scene.add(rimLight);
-        createLightHelper(rimLight.position, 0xff0000, '8. RIM (back-right)');
+        createLightHelper(rimLight.position, 0xff0000, '3. RIM (0.3)');
 
-        // 9. LOW FRONT LIGHT - 25% height from bottom - REDUCED 25%
-        const lowFrontLight = new THREE.DirectionalLight(0xffffff, 0.11);
-        lowFrontLight.position.set(0, 0.5, 6);
-        scene.add(lowFrontLight);
-        createLightHelper(lowFrontLight.position, 0x90ee90, '9. LOW FRONT (25% height)');
-
-        // Ambient - minimal
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.05);
+        // 4. AMBIENT LIGHT - Global soft illumination
+        // Low intensity (0.2) to fill shadows without washing out colors
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
         scene.add(ambientLight);
 
-        // Hemisphere - minimal
-        const hemiLight = new THREE.HemisphereLight(0x606060, 0x202020, 0.03);
-        scene.add(hemiLight);
-
-        console.log('=== LIGHT POSITIONS (VERY DIM) ===');
-        console.log('1. KEY:       0.12');
-        console.log('2. FILL:      0.06');
-        console.log('3. BACK:      0.06');
-        console.log('4. LEFT:      0.06');
-        console.log('5. RIGHT:     0.08');
-        console.log('6. TOP:       0.05');
-        console.log('7. BOTTOM:    0.03');
-        console.log('8. RIM:       0.08');
-        console.log('9. LOW FRONT: 0.15');
+        console.log('=== PROFESSIONAL RAL COLOR LIGHTING ===');
+        console.log('Key Light:    1.0 @ (2,2,2)');
+        console.log('Fill Light:   0.5 @ (-2,2,2)');
+        console.log('Rim Light:    0.3 @ (0,3,-2)');
+        console.log('Ambient:      0.2 (global)');
+        console.log('All lights:   Pure white 0xffffff');
+        console.log('No HDRI, No Environment Map for accurate RAL colors');
     }
 
     // =========================================================
