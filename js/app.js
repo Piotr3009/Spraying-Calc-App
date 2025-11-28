@@ -1405,46 +1405,44 @@ document.addEventListener('DOMContentLoaded', function() {
         removeLightHelpers();
 
         // ============================================================
-        // PROFESSIONAL RAL COLOR LIGHTING SETUP
-        // Based on studio lighting for accurate color reproduction
+        // CLASSIC PROFESSIONAL STUDIO LIGHTING
+        // 45° angle setup for natural 3D appearance
         // ============================================================
 
-        // 1. KEY LIGHT - Main directional light from front-top-right
-        // Position: 45° angle, provides main illumination and natural shadow
+        // 1. KEY LIGHT - Main light at 45° angle
+        // Medium height Y=4, creates natural shadows and depth
         const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        keyLight.position.set(2, 2, 2);
+        keyLight.position.set(3, 4, 5);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         scene.add(keyLight);
         createLightHelper(keyLight.position, 0xffff00, '1. KEY (1.0)');
 
-        // 2. FILL LIGHT - Softens shadows, from front-left
-        // Lower intensity to maintain color accuracy
+        // 2. FILL LIGHT - Softens shadows from front-left
+        // Medium height Y=3, balances the key light
         const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        fillLight.position.set(-2, 2, 2);
+        fillLight.position.set(-3, 3, 4);
         scene.add(fillLight);
         createLightHelper(fillLight.position, 0x00ff00, '2. FILL (0.5)');
 
-        // 3. RIM LIGHT - Back highlight, defines edges
-        // Subtle intensity to avoid color contamination
+        // 3. RIM LIGHT - Back/top highlight for edge definition
+        // Higher position Y=6, from behind
         const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        rimLight.position.set(0, 3, -2);
+        rimLight.position.set(0, 6, -5);
         scene.add(rimLight);
         createLightHelper(rimLight.position, 0xff0000, '3. RIM (0.3)');
 
         // 4. AMBIENT LIGHT - Global soft illumination
-        // Low intensity (0.2) to fill shadows without washing out colors
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
         scene.add(ambientLight);
 
-        console.log('=== PROFESSIONAL RAL COLOR LIGHTING ===');
-        console.log('Key Light:    1.0 @ (2,2,2)');
-        console.log('Fill Light:   0.5 @ (-2,2,2)');
-        console.log('Rim Light:    0.3 @ (0,3,-2)');
+        console.log('=== CLASSIC PROFESSIONAL 3-POINT LIGHTING ===');
+        console.log('Key Light:    1.0 @ (3,4,5)   - 45° front-right');
+        console.log('Fill Light:   0.5 @ (-3,3,4)  - front-left');
+        console.log('Rim Light:    0.3 @ (0,6,-5)  - back-top');
         console.log('Ambient:      0.2 (global)');
-        console.log('All lights:   Pure white 0xffffff');
-        console.log('No HDRI, No Environment Map for accurate RAL colors');
+        console.log('Natural 3D appearance with accurate RAL colors');
     }
 
     // =========================================================
