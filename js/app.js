@@ -1928,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // INITIALIZATION
     // =========================================================
     loadFormFromStorage();
-    updateRalCodeVisibility();
+    // updateRalCodeVisibility(); // REMOVED - RAL always visible
     initThreeJS();
     updateFaceUI();
     renderSummaryTable();
