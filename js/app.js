@@ -14,15 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Material multipliers (percentage)
         materialMultipliers: {
-            "MDF": 0,           // 0% - base
-            "Flat": 5,          // +5%
-            "Shaker": 25,       // +25%
-            "Veneer": 15,       // +15%
-            "Timber": 30,       // +30%
-            "V-carve front (dense pattern)": 50,  // +50%
-            "Door frame": 20,   // +20%
-            "Sash window (3 elements)": 60,  // +60%
-            "3D furniture panel": 45  // +45%
+            "Flat": 0,          // 0% - FLAT SMOOTH mdf (base)
+            "Shaker": 25,       // +25% - Shaker SMOOTH mdf
+            "Timber": 30,       // +30% - timber with grain
+            "Veneer": 15,       // +15% - veneer clear laquier
+            "3D Carved": 50,    // +50% - 3D Textured Carved Surface
+            "Door frame": 20,   // +20% - doors frame
+            "Sash window": 60   // +60% - Sash windows
         },
         
         // Color categories (RAL codes)
@@ -1006,12 +1004,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'Veneer':
                     textures = this.textureGenerator.createVeneerTextures();
                     break;
-                case 'MDF':
-                    textures = this.textureGenerator.createMDFTextures();
-                    break;
                 case 'Flat':
                 case 'Shaker':
                 case 'Door frame':
+                case '3D Carved':
+                case 'Sash window':
                 default:
                     textures = this.textureGenerator.createSapeleTextures();
             }
@@ -1558,10 +1555,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const shakerBuilder = new ShakerDoorBuilder(W, H, T);
                 result = shakerBuilder.build(woodMaterial, paintMaterial, selectedFaces);
                 break;
-            case 'MDF':
             case 'Timber':
             case 'Veneer':
             case 'Flat':
+            case '3D Carved':
+            case 'Sash window':
             default:
                 const flatBuilder = new FlatPanelBuilder(W, H, T);
                 result = flatBuilder.build(woodMaterial, paintMaterial, selectedFaces);
