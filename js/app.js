@@ -99,6 +99,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return price;
     }
+    
+    // Special pricing for Sash windows - fixed rate structure
+    function calculateSashWindowPrice(areaM2) {
+        // Base: £200 for first m²
+        // Additional: £50 per m² after first
+        if (areaM2 <= 1) {
+            return 200;
+        } else {
+            return 200 + (areaM2 - 1) * 50;
+        }
+    }
 
     // =========================================================
     // RAL COLOR DATABASE
@@ -1064,6 +1075,146 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
+    // SASH WINDOW BUILDER
+    // =========================================================
+    class SashWindowBuilder {
+        constructor(width, height, thickness, frameWidth = 0.08) {
+            this.width = width;
+            this.height = height;
+            this.thickness = thickness;
+            this.frameWidth = frameWidth;
+            this.barWidth = 0.04; // Glazing bar width
+        }
+
+        build(woodMaterial, paintMaterial, selectedFaces) {
+            const group = new THREE.Group();
+            const meshes = [];
+            
+            // Glass material - transparent
+            const glassMaterial = new THREE.MeshStandardMaterial({
+                color: 0x88CCFF,
+                transparent: true,
+                opacity: 0.3,
+                metalness: 0.1,
+                roughness: 0.1
+            });
+
+            const W = this.width;
+            const H = this.height;
+            const T = this.thickness;
+            const fw = this.frameWidth; // Frame width
+            const bw = this.barWidth; // Glazing bar width
+
+            // Helper function to create frame piece
+            const createFramePiece = (w, h, d, x, y, z) => {
+                const geo = new THREE.BoxGeometry(w, h, d);
+                const mesh = new THREE.Mesh(geo, paintMaterial);
+                mesh.position.set(x, y, z);
+                return mesh;
+            };
+
+            // 1. OUTER FRAME - 4 pieces (top, bottom, left, right)
+            // Top frame
+            const topFrame = createFramePiece(W, fw, T, 0, H/2 - fw/2, 0);
+            group.add(topFrame);
+            
+            // Bottom frame
+            const bottomFrame = createFramePiece(W, fw, T, 0, -H/2 + fw/2, 0);
+            group.add(bottomFrame);
+            
+            // Left frame
+            const leftFrame = createFramePiece(fw, H, T, -W/2 + fw/2, 0, 0);
+            group.add(leftFrame);
+            
+            // Right frame
+            const rightFrame = createFramePiece(fw, H, T, W/2 - fw/2, 0, 0);
+            group.add(rightFrame);
+
+            // 2. MIDDLE HORIZONTAL BAR (divides top and bottom sections)
+            const middleBar = createFramePiece(W - 2*fw, bw, T, 0, 0, 0);
+            group.add(middleBar);
+
+            // 3. TOP SECTION - 2 vertical glazing bars (creates 3 glass panes)
+            const topH = H/2 - fw - bw/2;
+            const barSpacing = (W - 2*fw) / 3;
+            
+            // First vertical bar in top section
+            const topBar1 = createFramePiece(bw, topH, T, -barSpacing + fw, H/4 + bw/4, 0);
+            group.add(topBar1);
+            
+            // Second vertical bar in top section
+            const topBar2 = createFramePiece(bw, topH, T, barSpacing - fw, H/4 + bw/4, 0);
+            group.add(topBar2);
+
+            // 4. BOTTOM SECTION - 1 vertical glazing bar (creates 2 glass panes)
+            const bottomH = H/2 - fw - bw/2;
+            const bottomBar = createFramePiece(bw, bottomH, T, 0, -H/4 - bw/4, 0);
+            group.add(bottomBar);
+
+            // 5. GLASS PANES (transparent - not painted)
+            // Top section - 3 panes
+            const glassW = (W - 2*fw - 2*bw) / 3;
+            const glassHTop = topH - bw;
+            
+            for (let i = 0; i < 3; i++) {
+                const glassGeo = new THREE.BoxGeometry(glassW, glassHTop, T * 0.2);
+                const glassMesh = new THREE.Mesh(glassGeo, glassMaterial);
+                const xPos = -W/2 + fw + bw + glassW/2 + i * (glassW + bw);
+                glassMesh.position.set(xPos, H/4 + bw/4, 0);
+                group.add(glassMesh);
+            }
+            
+            // Bottom section - 2 panes
+            const glassWBottom = (W - 2*fw - bw) / 2;
+            const glassHBottom = bottomH - bw;
+            
+            for (let i = 0; i < 2; i++) {
+                const glassGeo = new THREE.BoxGeometry(glassWBottom, glassHBottom, T * 0.2);
+                const glassMesh = new THREE.Mesh(glassGeo, glassMaterial);
+                const xPos = -W/2 + fw + bw/2 + glassWBottom/2 + i * (glassWBottom + bw);
+                glassMesh.position.set(xPos, -H/4 - bw/4, 0);
+                group.add(glassMesh);
+            }
+
+            // Add all painted pieces to meshes array for face selection
+            meshes.push({
+                mesh: topFrame,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: bottomFrame,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: leftFrame,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: rightFrame,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: middleBar,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: topBar1,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: topBar2,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+            meshes.push({
+                mesh: bottomBar,
+                faces: ['front', 'back', 'top', 'bottom', 'left', 'right']
+            });
+
+            return { group, meshes };
+        }
+    }
+
+    // =========================================================
     // DOOR FRAME BUILDER (П shape)
     // =========================================================
     class DoorFrameBuilder {
@@ -1672,17 +1823,33 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCalculations() {
         const W = parseFloat(widthInput.value) || 0;
         const H = parseFloat(heightInput.value) || 0;
-        const T = parseFloat(thicknessInput.value) || 0;
+        const T = parseFloat(thicknessInput.value) || 150; // Default 150mm for visualization
         
         // Get current settings
-        const materialType = elementTypeSelect.value || 'MDF';
+        const materialType = elementTypeSelect.value || 'Flat';
         const ralCode = ralCodeInput.value.trim();
         const sheenValue = parseInt(sheenSlider.value) || 0;
         
-        // Calculate price per m² based on material, color, and sheen
+        let totalArea = 0;
+        let price = 0;
+
+        // Special handling for Sash window - no thickness calculation
+        if (materialType === 'Sash window') {
+            // Only front and back faces count (no thickness)
+            if (faces.front.selected) totalArea += W * H;
+            if (faces.back.selected) totalArea += W * H;
+            
+            const areaM2 = totalArea / 1000000;
+            price = calculateSashWindowPrice(areaM2);
+            
+            areaDisplay.textContent = areaM2.toFixed(3) + ' m²';
+            priceDisplay.textContent = '£' + price.toFixed(2);
+            return;
+        }
+        
+        // Standard calculation for other materials
         const pricePerM2 = calculatePricePerM2(materialType, ralCode, sheenValue);
 
-        let totalArea = 0;
         if (faces.front.selected) totalArea += W * H;
         if (faces.back.selected) totalArea += W * H;
         if (faces.top.selected) totalArea += W * T;
@@ -1691,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (faces.right.selected) totalArea += H * T;
 
         const areaM2 = totalArea / 1000000;
-        const price = areaM2 * pricePerM2;
+        price = areaM2 * pricePerM2;
 
         areaDisplay.textContent = areaM2.toFixed(3) + ' m²';
         priceDisplay.textContent = '£' + price.toFixed(2);
@@ -1721,10 +1888,15 @@ document.addEventListener('DOMContentLoaded', function() {
             heightError.classList.add('visible');
             isValid = false;
         }
-        if (!thicknessInput.value || parseFloat(thicknessInput.value) <= 0) {
-            thicknessInput.classList.add('input-error');
-            thicknessError.classList.add('visible');
-            isValid = false;
+        
+        // Thickness not required for Sash window and Door frame (auto-set to 150mm)
+        const materialType = elementTypeSelect.value;
+        if (materialType !== 'Sash window' && materialType !== 'Door frame') {
+            if (!thicknessInput.value || parseFloat(thicknessInput.value) <= 0) {
+                thicknessInput.classList.add('input-error');
+                thicknessError.classList.add('visible');
+                isValid = false;
+            }
         }
 
         const hasSelectedFace = Object.values(faces).some(f => f.selected);
@@ -1744,26 +1916,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const W = parseFloat(widthInput.value);
         const H = parseFloat(heightInput.value);
-        const T = parseFloat(thicknessInput.value);
+        const T = parseFloat(thicknessInput.value) || 150; // Default 150mm
 
-        let totalArea = 0;
-        if (faces.front.selected) totalArea += W * H;
-        if (faces.back.selected) totalArea += W * H;
-        if (faces.top.selected) totalArea += W * T;
-        if (faces.bottom.selected) totalArea += W * T;
-        if (faces.left.selected) totalArea += H * T;
-        if (faces.right.selected) totalArea += H * T;
-
-        const areaM2 = totalArea / 1000000;
-        
-        // Get current settings for price calculation
         const materialType = elementTypeSelect.value;
         const ralCode = ralCodeInput.value.trim();
         const sheenValue = parseInt(sheenSlider.value) || 0;
-        
-        // Calculate price per m² based on material, color, and sheen
-        const pricePerM2 = calculatePricePerM2(materialType, ralCode, sheenValue);
-        const price = areaM2 * pricePerM2;
+
+        let totalArea = 0;
+        let price = 0;
+        let pricePerM2 = 0;
+
+        // Special handling for Sash window
+        if (materialType === 'Sash window') {
+            // Only front and back faces
+            if (faces.front.selected) totalArea += W * H;
+            if (faces.back.selected) totalArea += W * H;
+            
+            const areaM2 = totalArea / 1000000;
+            price = calculateSashWindowPrice(areaM2);
+            pricePerM2 = price / areaM2; // For display purposes
+        } else {
+            // Standard calculation
+            if (faces.front.selected) totalArea += W * H;
+            if (faces.back.selected) totalArea += W * H;
+            if (faces.top.selected) totalArea += W * T;
+            if (faces.bottom.selected) totalArea += W * T;
+            if (faces.left.selected) totalArea += H * T;
+            if (faces.right.selected) totalArea += H * T;
+            
+            const areaM2 = totalArea / 1000000;
+            pricePerM2 = calculatePricePerM2(materialType, ralCode, sheenValue);
+            price = areaM2 * pricePerM2;
+        }
+
+        const areaM2 = totalArea / 1000000;
 
         const element = {
             id: Date.now(),
@@ -1961,6 +2147,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     elementTypeSelect.addEventListener('change', function() {
+        const materialType = this.value;
+        
+        // Hide thickness input for Sash window and Door frame
+        // Auto-set to 150mm for visualization
+        if (materialType === 'Sash window' || materialType === 'Door frame') {
+            thicknessInput.value = 150;
+            thicknessInput.parentElement.style.display = 'none';
+        } else {
+            thicknessInput.parentElement.style.display = 'block';
+        }
+        
         materialFactory.clearAllCache();
         createDoor();
         updateCalculations();
