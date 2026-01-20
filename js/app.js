@@ -40,13 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ]
         },
         
-        // Sheen level multipliers (percentage)
+        // Sheen level multipliers (percentage) - matches sheenSelect values
         sheenMultipliers: {
-            0: 0,      // Dead Matt: 0%
-            30: 5,     // Eggshell: +5%
-            50: 10,    // Satin: +10%
-            70: 15,    // Semi-Gloss: +15%
-            100: 20    // Mirror: +20%
+            0: 0,      // Matt: +0%
+            5: 5,      // Eggshell: +5%
+            10: 10,    // Satin: +10%
+            15: 15,    // Semi-Gloss: +15%
+            20: 20,    // Gloss: +20%
+            25: 25     // Mirror: +25%
         }
     };
     
@@ -65,20 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Helper function to get sheen multiplier (interpolated)
+    // Helper function to get sheen multiplier - direct mapping for select values
     function getSheenMultiplier(sheenValue) {
-        const thresholds = [0, 30, 50, 70, 100];
-        const multipliers = [0, 5, 10, 15, 20];
-        
-        // Find the two closest thresholds
-        for (let i = 0; i < thresholds.length - 1; i++) {
-            if (sheenValue >= thresholds[i] && sheenValue <= thresholds[i + 1]) {
-                // Linear interpolation
-                const t = (sheenValue - thresholds[i]) / (thresholds[i + 1] - thresholds[i]);
-                return multipliers[i] + t * (multipliers[i + 1] - multipliers[i]);
-            }
-        }
-        return 0;
+        // Direct mapping: sheen value equals percentage multiplier
+        // 0 (Matt) = 0%, 5 (Eggshell) = 5%, 10 (Satin) = 10%, etc.
+        return PRICING_CONFIG.sheenMultipliers[sheenValue] || sheenValue || 0;
     }
     
     // Calculate final price per m²
@@ -196,8 +188,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const ralCodeInput = document.getElementById('ralCode');
     const ralSelect = document.getElementById('ralSelect');
     const ralColorPreview = document.getElementById('ralColorPreview');
-    const sheenSlider = document.getElementById('sheenSlider');
-    const sheenValue = document.getElementById('sheenValue');
+    const sheenSelect = document.getElementById('sheenSelect');
+    // DOM elements for new features
+    const quantityInput = document.getElementById('quantity');
+    const quantityError = document.getElementById('quantityError');
+    const autoCopyCheckbox = document.getElementById('autoCopyCheckbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const lightIntensitySlider = document.getElementById('lightIntensity');
+    const lightPercentageSpan = document.getElementById('lightPercentage');
+    const resetLightBtn = document.getElementById('resetLightBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
     // const paintManufacturerInput = document.getElementById('paintManufacturer'); // REMOVED
     // const paintLocationSelect = document.getElementById('paintLocation'); // REMOVED
     const elementTypeSelect = document.getElementById('elementType');
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addElementBtn = document.getElementById('addElementBtn');
     const resetProjectBtn = document.getElementById('resetProjectBtn');
     const legendItems = document.querySelectorAll('.legend-item');
-    const legendCheckboxes = document.querySelectorAll('.legend-checkbox');
+    const legendCheckboxes = document.querySelectorAll('.legend-checkbox.face-checkbox');
     const selectedFacesDisplay = document.getElementById('selectedFacesDisplay');
     const areaDisplay = document.getElementById('areaDisplay');
     const priceDisplay = document.getElementById('priceDisplay');
@@ -265,14 +265,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Non-linear scale: 50% UI = 25% real effect
     // =========================================================
     function getSheen() {
-        const sheenPercent = parseInt(sheenSlider?.value || 30);
-        // Quadratic scale: makes lower values less glossy
-        // 0% = 1.0 roughness (matt)
-        // 50% = 0.75 roughness (like old 25%)
-        // 100% = 0.0 roughness (mirror)
-        const normalizedSheen = sheenPercent / 100;
-        const adjustedSheen = Math.pow(normalizedSheen, 2); // Square for realistic curve
-        return 1.0 - adjustedSheen;
+        const sheenPercent = parseInt(sheenSelect?.value || 5);
+        // Sheen values from select: 0, 5, 10, 15, 20, 25
+        // Convert to roughness: higher sheen = lower roughness
+        // 0 (Matt) = 1.0 roughness, 25 (Mirror) = 0.0 roughness
+        const normalizedSheen = sheenPercent / 25; // 0-25 range
+        return 1.0 - normalizedSheen;
     }
 
     // =========================================================
@@ -1828,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get current settings
         const materialType = elementTypeSelect.value || 'Flat';
         const ralCode = ralCodeInput.value.trim();
-        const sheenValue = parseInt(sheenSlider.value) || 0;
+        const sheenValue = parseInt(sheenSelect?.value) || 5;
         
         let totalArea = 0;
         let price = 0;
@@ -1920,7 +1918,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const materialType = elementTypeSelect.value;
         const ralCode = ralCodeInput.value.trim();
-        const sheenValue = parseInt(sheenSlider.value) || 0;
+        const sheenValue = parseInt(sheenSelect?.value) || 5;
+        const quantity = parseInt(quantityInput?.value) || 1;
 
         let totalArea = 0;
         let price = 0;
@@ -1951,28 +1950,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const areaM2 = totalArea / 1000000;
 
+        // Multiply by quantity
+        const totalAreaWithQty = areaM2 * quantity;
+        const totalPrice = price * quantity;
+
         const element = {
             id: Date.now(),
             type: materialType,
             width: W,
             height: H,
             thickness: T,
+            quantity: quantity,
             faces: Object.keys(faces).filter(f => faces[f].selected),
-            area: areaM2,
+            area: totalAreaWithQty,
+            unitArea: areaM2,
             pricePerM2: pricePerM2,
             ralCode: ralCode,
             sheenValue: sheenValue,
-            price: price
+            price: totalPrice,
+            unitPrice: price
         };
 
         projectElements.push(element);
         saveFormToStorage();
         renderSummaryTable();
         updateProjectTotal();
+        updatePdfButtonState();
 
-        widthInput.value = '';
-        heightInput.value = '';
-        thicknessInput.value = '';
+        // Auto-copy feature - only clear if checkbox is NOT checked
+        const shouldClearFields = !autoCopyCheckbox?.checked;
+        if (shouldClearFields) {
+            widthInput.value = '';
+            heightInput.value = '';
+            thicknessInput.value = '';
+        }
 
         for (const face of Object.keys(faces)) {
             faces[face].selected = (face === 'front');
@@ -1999,10 +2010,12 @@ document.addEventListener('DOMContentLoaded', function() {
         projectElements.forEach((elem) => {
             const row = document.createElement('tr');
             const facesDisplay = elem.faces.map(f => f.charAt(0).toUpperCase()).join(', ');
+            const qty = elem.quantity || 1;
 
             row.innerHTML = `
                 <td>${elem.type}</td>
                 <td>${elem.width} × ${elem.height} × ${elem.thickness}</td>
+                <td>${qty}</td>
                 <td title="${elem.faces.join(', ')}">${elem.faces.length} (${facesDisplay})</td>
                 <td>${elem.area.toFixed(3)}</td>
                 <td class="price-cell">£${elem.price.toFixed(2)}</td>
@@ -2023,6 +2036,7 @@ document.addEventListener('DOMContentLoaded', function() {
         projectElements = projectElements.filter(e => e.id !== id);
         renderSummaryTable();
         updateProjectTotal();
+        updatePdfButtonState();
     }
 
     function updateProjectTotal() {
@@ -2037,6 +2051,7 @@ document.addEventListener('DOMContentLoaded', function() {
         projectElements = [];
         renderSummaryTable();
         updateProjectTotal();
+        updatePdfButtonState();
     }
 
     // =========================================================
@@ -2080,6 +2095,209 @@ document.addEventListener('DOMContentLoaded', function() {
     // updateRalCodeVisibility removed - RAL always visible now
 
     // =========================================================
+    // LIGHT INTENSITY CONTROL
+    // =========================================================
+    let sceneLights = [];
+    let baseLightIntensities = {};
+
+    function collectSceneLights() {
+        sceneLights = [];
+        baseLightIntensities = {};
+        scene.traverse((obj) => {
+            if (obj.isLight && !obj.isAmbientLight) {
+                sceneLights.push(obj);
+                baseLightIntensities[obj.uuid] = obj.intensity;
+            } else if (obj.isAmbientLight) {
+                sceneLights.push(obj);
+                baseLightIntensities[obj.uuid] = obj.intensity;
+            }
+        });
+    }
+
+    function updateLightIntensity(value) {
+        const multiplier = value / 100;
+        sceneLights.forEach((light) => {
+            const baseIntensity = baseLightIntensities[light.uuid];
+            if (baseIntensity !== undefined) {
+                light.intensity = baseIntensity * multiplier;
+            }
+        });
+        if (lightPercentageSpan) {
+            lightPercentageSpan.textContent = value + '%';
+        }
+    }
+
+    function resetLightIntensity() {
+        if (lightIntensitySlider) {
+            lightIntensitySlider.value = 100;
+            updateLightIntensity(100);
+        }
+    }
+
+    // =========================================================
+    // SELECT ALL FACES
+    // =========================================================
+    function handleSelectAllFaces(checked) {
+        const faceKeys = ['front', 'back', 'top', 'bottom', 'left', 'right'];
+        if (checked) {
+            // Select all faces
+            faceKeys.forEach(face => {
+                faces[face].selected = true;
+            });
+        } else {
+            // Deselect all except front
+            faceKeys.forEach(face => {
+                faces[face].selected = (face === 'front');
+            });
+        }
+        updateFaceUI();
+        createDoor();
+        updateCalculations();
+    }
+
+    // =========================================================
+    // PDF EXPORT BUTTON STATE
+    // =========================================================
+    function updatePdfButtonState() {
+        if (exportPdfBtn) {
+            if (projectElements.length > 0) {
+                exportPdfBtn.disabled = false;
+                exportPdfBtn.style.opacity = '1';
+                exportPdfBtn.style.cursor = 'pointer';
+            } else {
+                exportPdfBtn.disabled = true;
+                exportPdfBtn.style.opacity = '0.5';
+                exportPdfBtn.style.cursor = 'not-allowed';
+            }
+        }
+    }
+
+    // =========================================================
+    // PDF GENERATION
+    // =========================================================
+    function generatePDF() {
+        if (projectElements.length === 0) {
+            alert('No elements to export. Add items first.');
+            return;
+        }
+
+        // Check if jsPDF is loaded
+        if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+            alert('PDF library not loaded. Please refresh the page.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf || { jsPDF: window.jsPDF };
+        const doc = new jsPDF();
+
+        const projectName = projectNameInput?.value || 'Untitled Project';
+        const clientSite = clientSiteInput?.value || '';
+        const currentDate = new Date().toLocaleDateString('en-GB');
+
+        // Header
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(59, 130, 246); // Blue
+        doc.text('SprayCalc Pro', 20, 25);
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139); // Gray
+        doc.text('Professional Spray Painting Quote', 20, 33);
+
+        // Project details
+        doc.setFontSize(11);
+        doc.setTextColor(30, 41, 59);
+        doc.text(`Project: ${projectName}`, 20, 50);
+        if (clientSite) {
+            doc.text(`Client/Site: ${clientSite}`, 20, 58);
+        }
+        doc.text(`Date: ${currentDate}`, 20, clientSite ? 66 : 58);
+
+        // Line separator
+        const lineY = clientSite ? 72 : 64;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(20, lineY, 190, lineY);
+
+        // Table header
+        const tableStartY = lineY + 10;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(20, tableStartY, 170, 10, 'F');
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(71, 85, 105);
+
+        const headers = ['Type', 'Size (mm)', 'Qty', 'Faces', 'Area (m2)', 'Price'];
+        const colWidths = [35, 45, 15, 25, 25, 25];
+        let xPos = 22;
+        headers.forEach((header, i) => {
+            doc.text(header, xPos, tableStartY + 7);
+            xPos += colWidths[i];
+        });
+
+        // Table rows
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        let yPos = tableStartY + 18;
+
+        projectElements.forEach((elem, index) => {
+            // Alternate row background
+            if (index % 2 === 0) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(20, yPos - 5, 170, 8, 'F');
+            }
+
+            xPos = 22;
+            const qty = elem.quantity || 1;
+            const facesStr = elem.faces.map(f => f.charAt(0).toUpperCase()).join(',');
+            const rowData = [
+                elem.type,
+                `${elem.width}x${elem.height}x${elem.thickness}`,
+                qty.toString(),
+                facesStr,
+                elem.area.toFixed(3),
+                `£${elem.price.toFixed(2)}`
+            ];
+
+            rowData.forEach((cell, i) => {
+                doc.text(cell.toString(), xPos, yPos);
+                xPos += colWidths[i];
+            });
+
+            yPos += 8;
+
+            // Page break if needed
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 30;
+            }
+        });
+
+        // Total
+        yPos += 5;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(20, yPos, 190, yPos);
+        yPos += 10;
+
+        const total = projectElements.reduce((sum, elem) => sum + elem.price, 0);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129); // Green
+        doc.text(`Total Quote: £${total.toFixed(2)}`, 140, yPos);
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text('Generated by SprayCalc Pro', 20, 285);
+
+        // Save file
+        const filename = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_quote.pdf`;
+        doc.save(filename);
+    }
+
+    // =========================================================
     // EVENT LISTENERS
     // =========================================================
     // colourStandardRadios event listeners removed - no more radio buttons
@@ -2102,10 +2320,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Sheen slider
-    if (sheenSlider) {
-        sheenSlider.addEventListener('input', function() {
-            if (sheenValue) sheenValue.textContent = this.value;
+    // Sheen select dropdown
+    if (sheenSelect) {
+        sheenSelect.addEventListener('change', function() {
             materialFactory.clearPaintCache();
             createDoor();
             updateCalculations();  // Recalculate price when sheen changes
@@ -2120,6 +2337,46 @@ document.addEventListener('DOMContentLoaded', function() {
     if (toggleLightsBtn) {
         toggleLightsBtn.addEventListener('click', function() {
             toggleLightHelpers();
+        });
+    }
+
+    // Light intensity slider
+    if (lightIntensitySlider) {
+        lightIntensitySlider.addEventListener('input', function() {
+            updateLightIntensity(parseInt(this.value));
+        });
+    }
+
+    // Reset light button
+    if (resetLightBtn) {
+        resetLightBtn.addEventListener('click', function() {
+            resetLightIntensity();
+        });
+    }
+
+    // Select All Faces checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            handleSelectAllFaces(this.checked);
+        });
+    }
+
+    // PDF Export button
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', function() {
+            generatePDF();
+        });
+    }
+
+    // Quantity input validation
+    if (quantityInput) {
+        quantityInput.addEventListener('input', function() {
+            let val = parseInt(this.value);
+            if (isNaN(val) || val < 1) {
+                this.value = 1;
+            } else if (val > 999) {
+                this.value = 999;
+            }
         });
     }
 
@@ -2184,7 +2441,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFormFromStorage();
     // updateRalCodeVisibility(); // REMOVED - RAL always visible
     initThreeJS();
+
+    // Collect scene lights after initialization for intensity control
+    setTimeout(() => {
+        collectSceneLights();
+    }, 100);
+
     updateFaceUI();
     renderSummaryTable();
     updateProjectTotal();
+    updatePdfButtonState();
 });
