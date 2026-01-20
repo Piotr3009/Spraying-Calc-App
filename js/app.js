@@ -198,6 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const lightPercentageSpan = document.getElementById('lightPercentage');
     const resetLightBtn = document.getElementById('resetLightBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
+    // Company and Logo elements
+    const companyNameInput = document.getElementById('companyName');
+    const logoInput = document.getElementById('logoInput');
+    const uploadLogoBtn = document.getElementById('uploadLogoBtn');
+    const removeLogoBtn = document.getElementById('removeLogoBtn');
+    const logoStatus = document.getElementById('logoStatus');
+    let companyLogo = localStorage.getItem('sprayCalcLogo') || null;
     // const paintManufacturerInput = document.getElementById('paintManufacturer'); // REMOVED
     // const paintLocationSelect = document.getElementById('paintLocation'); // REMOVED
     const elementTypeSelect = document.getElementById('elementType');
@@ -1795,8 +1802,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateFaceUI() {
         legendItems.forEach(item => {
             const face = item.dataset.face;
+            if (!face) return; // Skip Select All checkbox
             const checkbox = item.querySelector('.legend-checkbox');
-            if (faces[face].selected) {
+            if (faces[face] && faces[face].selected) {
                 item.classList.add('selected');
                 if (checkbox) checkbox.checked = true;
             } else {
@@ -2062,6 +2070,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (saved) {
             try {
                 const data = JSON.parse(saved);
+                if (data.companyName && companyNameInput) companyNameInput.value = data.companyName;
                 if (data.projectName) projectNameInput.value = data.projectName;
                 if (data.clientSite) clientSiteInput.value = data.clientSite;
                 // colourName removed
@@ -2079,6 +2088,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function saveFormToStorage() {
         const data = {
+            companyName: companyNameInput?.value || '',
             projectName: projectNameInput.value,
             clientSite: clientSiteInput.value,
             // colourName removed
@@ -2192,13 +2202,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const projectName = projectNameInput?.value || 'Untitled Project';
         const clientSite = clientSiteInput?.value || '';
+        const companyName = companyNameInput?.value || 'SprayCalc Pro';
         const currentDate = new Date().toLocaleDateString('en-GB');
 
-        // Header
+        // Add logo if available (right side)
+        if (companyLogo) {
+            try {
+                doc.addImage(companyLogo, 'AUTO', 150, 10, 40, 25);
+            } catch (e) {
+                console.warn('Could not add logo to PDF:', e);
+            }
+        }
+
+        // Header - Company Name
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(59, 130, 246); // Blue
-        doc.text('SprayCalc Pro', 20, 25);
+        doc.text(companyName, 20, 25);
 
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
@@ -2298,6 +2318,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
+    // LOGO HANDLING
+    // =========================================================
+    function updateLogoUI() {
+        if (companyLogo) {
+            if (logoStatus) logoStatus.textContent = 'Logo saved ✓';
+            if (removeLogoBtn) removeLogoBtn.style.display = 'inline-block';
+        } else {
+            if (logoStatus) logoStatus.textContent = 'No logo';
+            if (removeLogoBtn) removeLogoBtn.style.display = 'none';
+        }
+    }
+
+    function handleLogoUpload(file) {
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            companyLogo = e.target.result;
+            localStorage.setItem('sprayCalcLogo', companyLogo);
+            updateLogoUI();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+        companyLogo = null;
+        localStorage.removeItem('sprayCalcLogo');
+        updateLogoUI();
+    }
+
+    // Initialize logo UI on load
+    updateLogoUI();
+
+    // =========================================================
     // EVENT LISTENERS
     // =========================================================
     // colourStandardRadios event listeners removed - no more radio buttons
@@ -2331,6 +2385,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize RAL preview
     updateRalPreview();
+
+    // Logo upload event listeners
+    if (uploadLogoBtn && logoInput) {
+        uploadLogoBtn.addEventListener('click', function() {
+            logoInput.click();
+        });
+        
+        logoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleLogoUpload(this.files[0]);
+            }
+        });
+    }
+    
+    if (removeLogoBtn) {
+        removeLogoBtn.addEventListener('click', function() {
+            removeLogo();
+        });
+    }
 
     // Toggle light helpers button
     const toggleLightsBtn = document.getElementById('toggleLightsBtn');

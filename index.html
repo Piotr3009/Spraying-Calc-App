@@ -30,6 +30,21 @@
                     <div class="form-section">
                         <div class="form-row">
                             <div class="form-group">
+                                <label for="companyName">Company Name</label>
+                                <input type="text" id="companyName" placeholder="Your company name">
+                            </div>
+                            <div class="form-group">
+                                <label>Company Logo</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-small" id="uploadLogoBtn" style="padding: 6px 12px; font-size: 0.8rem;">📷 Upload Logo</button>
+                                    <input type="file" id="logoInput" accept="image/*" style="display: none;">
+                                    <span id="logoStatus" style="font-size: 0.75rem; color: #64748b;">No logo</span>
+                                    <button type="button" class="btn btn-small" id="removeLogoBtn" style="padding: 4px 8px; font-size: 0.7rem; background: #ef4444; display: none;">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label for="projectName">Project Reference</label>
                                 <input type="text" id="projectName" placeholder="e.g. Kitchen Renovation London">
                             </div>
