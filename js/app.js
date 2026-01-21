@@ -2462,10 +2462,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     legendItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            if (e.target.type !== 'checkbox') {
-                e.preventDefault();
-                toggleFace(this.dataset.face);
+            const face = this.dataset.face;
+            // Skip if no data-face (Select All) or if clicking checkbox directly
+            if (!face || e.target.type === 'checkbox') {
+                return;
             }
+            e.preventDefault();
+            toggleFace(face);
         });
     });
 
