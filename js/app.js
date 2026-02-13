@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // PRICING SYSTEM - BASE + PERCENTAGE MULTIPLIERS
     // =========================================================
     const PRICING_CONFIG = {
-        basePrice: 50, // £50/m² - base price
+        basePrice: 60, // £60/m² - base price
         
         // Material multipliers (percentage)
         materialMultipliers: {
